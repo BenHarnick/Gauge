@@ -12,7 +12,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 Sex = Literal["male", "female"]
 SmokerStatus = Literal["yes", "no"]
-Region = Literal["northeast", "northwest", "southeast", "southwest"]
+# Census regions match what MEPS uses. The Kaggle CSV's cardinal regions
+# (northwest, southwest) are mapped onto these at load time.
+Region = Literal["northeast", "midwest", "south", "west"]
 
 # Features the model accepts. Kept tight: explicit numeric ranges so bad
 # inputs surface as 422s at the API layer instead of garbage predictions.

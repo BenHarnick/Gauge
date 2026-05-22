@@ -10,7 +10,7 @@ const BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
 export type Sex = "male" | "female";
 export type Smoker = "yes" | "no";
-export type Region = "northeast" | "northwest" | "southeast" | "southwest";
+export type Region = "northeast" | "midwest" | "south" | "west";
 
 export interface PredictionFeatures {
   age: number;

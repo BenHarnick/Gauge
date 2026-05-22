@@ -24,6 +24,7 @@ src/health_app/docchat/store.py
 src/health_app/predictor/__init__.py
 src/health_app/predictor/annual_cost.py
 src/health_app/predictor/dataset.py
+src/health_app/predictor/meps.py
 src/health_app/predictor/model.py
 src/health_app/predictor/schemas.py
 src/health_app/predictor/whatif.py

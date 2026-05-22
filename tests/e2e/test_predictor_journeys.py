@@ -31,7 +31,7 @@ def _baseline_payload() -> dict:
         "bmi": 32.0,
         "children": 2,
         "smoker": "yes",
-        "region": "southeast",
+        "region": "south",
     }
 
 

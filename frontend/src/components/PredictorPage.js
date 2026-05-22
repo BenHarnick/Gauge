@@ -6,7 +6,7 @@ import { Select } from "./Select";
 import { Slider } from "./Slider";
 import { Toggle } from "./Toggle";
 import { WhatIfChart } from "./WhatIfChart";
-const REGIONS = ["northeast", "northwest", "southeast", "southwest"];
+const REGIONS = ["northeast", "midwest", "south", "west"];
 const PLAN_LABELS = {
     none: "No plan (just predict charges)",
     hdhp_silver: "HDHP Silver",

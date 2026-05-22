@@ -27,7 +27,15 @@ FEATURE_COLUMNS: list[str] = [
     "region",
 ]
 TARGET_COLUMN: str = "charges"
-REGIONS: list[str] = ["northeast", "northwest", "southeast", "southwest"]
+# Census regions (matches MEPS). The Kaggle CSV uses cardinal regions
+# (northeast/northwest/southeast/southwest) which we remap on load.
+REGIONS: list[str] = ["northeast", "midwest", "south", "west"]
+KAGGLE_REGION_MAP: dict[str, str] = {
+    "northeast": "northeast",
+    "northwest": "midwest",
+    "southeast": "south",
+    "southwest": "west",
+}
 
 
 def generate_synthetic_dataset(
@@ -92,14 +100,20 @@ def generate_synthetic_dataset(
 def load_csv(path: Path | str) -> pd.DataFrame:
     """Load a Kaggle-style insurance CSV from disk.
 
-    Useful when you want to retrain on the real dataset. The file must
+    The CSV's cardinal regions (northwest, southwest, southeast, northeast)
+    are remapped to the canonical Census regions used elsewhere in the
+    schema. The mapping is documented in `KAGGLE_REGION_MAP`.
+
+    Useful when you want to retrain on the Kaggle dataset. The file must
     contain the columns named in `FEATURE_COLUMNS` plus `charges`.
     """
     df = pd.read_csv(path)
     missing = set(FEATURE_COLUMNS + [TARGET_COLUMN]) - set(df.columns)
     if missing:
         raise ValueError(f"CSV is missing expected columns: {sorted(missing)}")
-    return df[FEATURE_COLUMNS + [TARGET_COLUMN]].copy()
+    df = df[FEATURE_COLUMNS + [TARGET_COLUMN]].copy()
+    df["region"] = df["region"].map(KAGGLE_REGION_MAP).fillna(df["region"])
+    return df
 
 
 def load_dataset(

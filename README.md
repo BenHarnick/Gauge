@@ -32,9 +32,14 @@ should confirm coverage and costs with their insurer.
 * **Features:** age, sex, bmi, children, smoker, region. Categorical
   features are one-hot encoded via a `ColumnTransformer`; numerics pass
   through.
-* **Data:** synthetic Kaggle-insurance-shaped dataset, deterministically
-  generated. A `load_csv` path is provided so dropping in the real
-  Kaggle file is one function call away.
+* **Data:** auto-detects in this order:
+  1. `data/meps_hc233.dta` (MEPS HC 2021, run `python scripts/fetch_meps.py`)
+  2. `data/insurance.csv` (Kaggle insurance dataset)
+  3. Synthetic Kaggle-insurance-shaped dataset, deterministically generated.
+
+  Region labels are Census-standard (northeast, midwest, south, west) to
+  match MEPS. The Kaggle CSV's cardinal-direction regions are mapped
+  onto Census regions at load time.
 * **What-if simulator:** holds a baseline feature vector fixed, varies
   one feature across a list of values, and predicts the curve in a
   single batched call. Optionally annotates each point with annual

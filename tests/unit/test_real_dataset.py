@@ -32,14 +32,15 @@ def test_real_csv_has_expected_schema() -> None:
     df = load_csv(_REAL_CSV)
     assert list(df.columns) == FEATURE_COLUMNS + [TARGET_COLUMN]
     # Categorical values must be inside the schema's literal sets so the
-    # OneHotEncoder doesn't pick up surprise categories.
+    # OneHotEncoder doesn't pick up surprise categories. Regions get
+    # remapped from cardinal (Kaggle) to Census (canonical) at load time.
     assert set(df["sex"].unique()) <= {"male", "female"}
     assert set(df["smoker"].unique()) <= {"yes", "no"}
     assert set(df["region"].unique()) <= {
         "northeast",
-        "northwest",
-        "southeast",
-        "southwest",
+        "midwest",
+        "south",
+        "west",
     }
     assert (df["charges"] > 0).all()
 

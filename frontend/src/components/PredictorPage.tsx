@@ -18,7 +18,7 @@ import { Slider } from "./Slider";
 import { Toggle } from "./Toggle";
 import { WhatIfChart } from "./WhatIfChart";
 
-const REGIONS: Region[] = ["northeast", "northwest", "southeast", "southwest"];
+const REGIONS: Region[] = ["northeast", "midwest", "south", "west"];
 
 const PLAN_LABELS: Record<KnownPlanId | "none", string> = {
   none: "No plan (just predict charges)",
