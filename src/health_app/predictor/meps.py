@@ -97,12 +97,25 @@ MEPS_SMOKER_MAP: dict[int, str] = {1: "yes", 2: "no"}
 
 
 def _pick_column(df: pd.DataFrame, role: str) -> str:
-    """Pick the first candidate column for `role` that exists in `df`.
+    """Pick the first candidate column for ``role`` that exists in ``df``.
 
-    Raises:
-        ValueError: With a hint listing columns in `df` whose names
-            contain the role's keyword(s), so the candidate list can be
-            extended.
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame whose columns are searched.
+    role : str
+        Key into ``COLUMN_CANDIDATES`` (e.g. ``"age"``, ``"bmi"``).
+
+    Returns
+    -------
+    str
+        The first candidate column name that is present in ``df``.
+
+    Raises
+    ------
+    ValueError
+        With a hint listing columns in ``df`` whose names contain the
+        role's keyword(s), so the candidate list can be extended.
     """
     candidates = COLUMN_CANDIDATES[role]
     for name in candidates:
@@ -135,20 +148,26 @@ def load_meps(
 ) -> pd.DataFrame:
     """Load a MEPS HC Stata file and shape it to match the predictor schema.
 
-    Args:
-        path: Path to the MEPS HC .dta file (Full-Year Consolidated File).
-        saq_path: Optional path to the SAQ supplement .dta file, which
-            contains BMI. Merged onto the main file by `DUPERSID`. If
-            omitted and the main file doesn't have BMI, a clear error
-            tells you to fetch it.
+    Parameters
+    ----------
+    path : Path or str
+        Path to the MEPS HC ``.dta`` file (Full-Year Consolidated File).
+    saq_path : Path or str or None, optional
+        Path to the SAQ supplement ``.dta`` file, which contains BMI.
+        Merged onto the main file by ``DUPERSID``. If omitted and the main
+        file does not have BMI, a clear error tells you to fetch it.
 
-    Returns:
-        DataFrame with columns `FEATURE_COLUMNS + [TARGET_COLUMN]`.
-        Adults only, complete cases, charges may include zeros.
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns ``FEATURE_COLUMNS + [TARGET_COLUMN]``.
+        Adults only, complete cases; charges may include zeros.
 
-    Raises:
-        ValueError: If a file can't be read or a required role can't be
-            matched to any candidate column name.
+    Raises
+    ------
+    ValueError
+        If a file cannot be read or a required role cannot be matched to
+        any candidate column name.
     """
     try:
         df = pd.read_stata(path, convert_categoricals=False)

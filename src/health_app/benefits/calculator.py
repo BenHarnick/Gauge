@@ -34,18 +34,28 @@ def estimate_cost_share(
 ) -> EstimateResult:
     """Estimate member and plan responsibility for a single procedure.
 
-    Args:
-        plan: The member's plan. Must match `member.plan_id`.
-        member: The member, including year-to-date accumulators.
-        procedure: The procedure being estimated.
-        in_network: True for in-network providers, False otherwise.
+    Parameters
+    ----------
+    plan : Plan
+        The member's plan. Must match ``member.plan_id``.
+    member : Member
+        The member, including year-to-date accumulators.
+    procedure : Procedure
+        The procedure being estimated.
+    in_network : bool
+        ``True`` for in-network providers, ``False`` otherwise.
 
-    Returns:
-        An `EstimateResult` with the breakdown and any notes flagging
-        unusual conditions (out-of-network, OOP cap reached, etc.).
+    Returns
+    -------
+    EstimateResult
+        Breakdown of allowed amount, copay, deductible applied, coinsurance,
+        and total member vs. plan responsibility, plus any advisory notes
+        flagging unusual conditions (out-of-network, OOP cap reached, etc.).
 
-    Raises:
-        ValueError: If the member's plan does not match the supplied plan.
+    Raises
+    ------
+    ValueError
+        If the member's plan ID does not match the supplied plan.
     """
     if member.plan_id != plan.plan_id:
         raise ValueError(
@@ -110,7 +120,21 @@ def estimate_cost_share(
 
 
 def _absorb(bucket: int, excess: int) -> tuple[int, int]:
-    """Reduce `bucket` by up to `excess`. Return (new bucket, leftover excess)."""
+    """Reduce ``bucket`` by up to ``excess``, returning the remainder.
+
+    Parameters
+    ----------
+    bucket : int
+        Current balance of a cost-share component in cents.
+    excess : int
+        Amount to absorb from the bucket in cents.
+
+    Returns
+    -------
+    tuple[int, int]
+        ``(new_bucket, leftover_excess)`` where ``new_bucket`` is the bucket
+        after absorption and ``leftover_excess`` is any unabsorbed remainder.
+    """
     if excess <= 0:
         return bucket, 0
     if bucket >= excess:

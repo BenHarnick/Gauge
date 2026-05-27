@@ -50,11 +50,19 @@ _KIND_SYNTHETIC = "synthetic"
 
 
 def _resolve_dataset_source() -> tuple[str, str, Path | None, Path | None]:
-    """Pick the dataset and return (kind, source_tag, primary_path, saq_path).
+    """Pick the dataset source and return its kind, tag, and file paths.
 
-    The source tag is used to namespace the model cache file so swapping
-    datasets forces a retrain. `saq_path` is only populated for MEPS
-    sources and is None if no SAQ supplement is available.
+    The source tag namespaces the model cache file so swapping datasets
+    forces a retrain rather than silently reusing the old model.
+
+    Returns
+    -------
+    tuple[str, str, Path or None, Path or None]
+        ``(kind, source_tag, primary_path, saq_path)`` where ``kind`` is
+        one of ``_KIND_MEPS``, ``_KIND_CSV``, or ``_KIND_SYNTHETIC``;
+        ``source_tag`` is a stable string used to key the cache;
+        ``primary_path`` is the dataset file path (``None`` for synthetic);
+        and ``saq_path`` is the MEPS SAQ supplement path or ``None``.
     """
     env_csv = os.environ.get("HEALTH_APP_DATASET_CSV")
     if env_csv:
@@ -75,13 +83,36 @@ def _resolve_dataset_source() -> tuple[str, str, Path | None, Path | None]:
 
 
 def _cache_path_for(source_tag: str) -> Path:
-    """Stable, source-keyed cache file path."""
+    """Return the stable, source-keyed cache file path for a trained model.
+
+    Parameters
+    ----------
+    source_tag : str
+        The source tag returned by :func:`_resolve_dataset_source`.
+
+    Returns
+    -------
+    Path
+        Path under ``_CACHE_DIR`` whose filename embeds a 12-character
+        SHA-1 digest of ``source_tag``.
+    """
     digest = hashlib.sha1(source_tag.encode("utf-8")).hexdigest()[:12]
     return _CACHE_DIR / f"cost_predictor.{digest}.joblib"
 
 
 def _load_or_train_predictor() -> CostPredictor:
-    """Return a fitted predictor, training and caching on first run."""
+    """Return a fitted predictor, loading from cache or training on first run.
+
+    On the first call for a given dataset source, trains the model and
+    writes it to ``_CACHE_DIR``. Subsequent calls load the cached file
+    directly. Swapping the dataset source (via env vars or local files)
+    produces a different cache key and triggers a fresh retrain.
+
+    Returns
+    -------
+    CostPredictor
+        A fully fitted predictor ready to serve predictions.
+    """
     kind, source_tag, path, saq_path = _resolve_dataset_source()
     cache_path = _cache_path_for(source_tag)
 

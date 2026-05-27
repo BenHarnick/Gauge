@@ -45,22 +45,27 @@ def generate_synthetic_dataset(
     """Generate a deterministic, Kaggle-insurance-shaped dataset.
 
     The data-generating function approximates published analyses of the
-    real Kaggle dataset:
+    real Kaggle dataset::
 
-      charges = base
-              + 250 * age
-              + 425 * children
-              + 24_000 * smoker
-              + (1_400 if smoker else 60) * max(0, bmi - 30)
-              + lognormal multiplicative noise
+        charges = base
+                + 250 * age
+                + 425 * children
+                + 24_000 * smoker
+                + (1_400 if smoker else 60) * max(0, bmi - 30)
+                + lognormal multiplicative noise
 
-    Args:
-        n_rows: Number of synthetic rows to draw.
-        seed: Numpy random seed for reproducibility.
+    Parameters
+    ----------
+    n_rows : int, optional
+        Number of synthetic rows to draw. Default is 1500.
+    seed : int, optional
+        Numpy random seed for reproducibility. Default is 42.
 
-    Returns:
-        A pandas DataFrame with columns age, sex, bmi, children, smoker,
-        region, charges (charges in dollars).
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns ``age``, ``sex``, ``bmi``, ``children``,
+        ``smoker``, ``region``, ``charges`` (charges in dollars).
     """
     rng = np.random.default_rng(seed)
 
@@ -102,10 +107,24 @@ def load_csv(path: Path | str) -> pd.DataFrame:
 
     The CSV's cardinal regions (northwest, southwest, southeast, northeast)
     are remapped to the canonical Census regions used elsewhere in the
-    schema. The mapping is documented in `KAGGLE_REGION_MAP`.
+    schema. The mapping is documented in ``KAGGLE_REGION_MAP``.
 
-    Useful when you want to retrain on the Kaggle dataset. The file must
-    contain the columns named in `FEATURE_COLUMNS` plus `charges`.
+    Parameters
+    ----------
+    path : Path or str
+        Path to the CSV file. Must contain the columns named in
+        ``FEATURE_COLUMNS`` plus ``charges``.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns ``FEATURE_COLUMNS + [TARGET_COLUMN]``,
+        with regions normalised to Census nomenclature.
+
+    Raises
+    ------
+    ValueError
+        If any expected column is missing from the file.
     """
     df = pd.read_csv(path)
     missing = set(FEATURE_COLUMNS + [TARGET_COLUMN]) - set(df.columns)
@@ -121,7 +140,24 @@ def load_dataset(
     n_rows: int = 1500,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """Return training data, preferring a CSV if supplied, else synthetic."""
+    """Return training data, preferring a CSV if supplied, else synthetic.
+
+    Parameters
+    ----------
+    csv_path : Path or str or None, optional
+        Path to a Kaggle-style insurance CSV. When supplied the file is
+        loaded via :func:`load_csv`; otherwise synthetic data is generated.
+    n_rows : int, optional
+        Number of synthetic rows when no CSV is given. Default is 1500.
+    seed : int, optional
+        Random seed passed to :func:`generate_synthetic_dataset`. Default
+        is 42.
+
+    Returns
+    -------
+    pd.DataFrame
+        Training DataFrame with columns ``FEATURE_COLUMNS + [TARGET_COLUMN]``.
+    """
     if csv_path is not None:
         return load_csv(csv_path)
     return generate_synthetic_dataset(n_rows=n_rows, seed=seed)

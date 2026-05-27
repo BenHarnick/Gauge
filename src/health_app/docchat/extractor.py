@@ -14,18 +14,24 @@ from pypdf import PdfReader
 
 
 def extract_pages(pdf_bytes: bytes) -> list[tuple[int, str]]:
-    """Return a list of (page_number, text) tuples, page numbers 1-indexed.
+    """Return ``(page_number, text)`` tuples extracted from a PDF, 1-indexed.
 
-    Args:
-        pdf_bytes: The raw PDF file contents.
+    Parameters
+    ----------
+    pdf_bytes : bytes
+        Raw PDF file contents.
 
-    Returns:
-        One entry per page with the page number and its extracted text.
-        Pages with no extractable text return an empty string rather than
-        being skipped, so downstream consumers can still report page count.
+    Returns
+    -------
+    list[tuple[int, str]]
+        One entry per page. Pages with no extractable text return an empty
+        string rather than being omitted, preserving the page count for
+        downstream consumers.
 
-    Raises:
-        ValueError: If the bytes don't parse as a PDF.
+    Raises
+    ------
+    ValueError
+        If ``pdf_bytes`` cannot be parsed as a PDF.
     """
     try:
         reader = PdfReader(io.BytesIO(pdf_bytes))

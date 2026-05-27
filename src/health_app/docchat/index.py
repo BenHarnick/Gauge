@@ -22,7 +22,20 @@ class RetrievalIndex(Protocol):
     """Protocol every chunk index conforms to."""
 
     def search(self, query: str, k: int = 4) -> list[tuple[Chunk, float]]:
-        """Return the top-k (chunk, score) pairs ranked by relevance."""
+        """Return the top-k ``(chunk, score)`` pairs ranked by relevance.
+
+        Parameters
+        ----------
+        query : str
+            Free-text search query.
+        k : int, optional
+            Maximum number of results to return. Default is 4.
+
+        Returns
+        -------
+        list[tuple[Chunk, float]]
+            ``(chunk, score)`` pairs in descending order of relevance.
+        """
         ...
 
 
@@ -35,6 +48,18 @@ class TfidfRetrievalIndex:
     """
 
     def __init__(self, chunks: list[Chunk]) -> None:
+        """Build a TF-IDF index over the supplied chunks.
+
+        Parameters
+        ----------
+        chunks : list[Chunk]
+            Chunks to index. Must contain at least one element.
+
+        Raises
+        ------
+        ValueError
+            If ``chunks`` is empty.
+        """
         if not chunks:
             raise ValueError(
                 "TfidfRetrievalIndex requires at least one chunk."
@@ -64,6 +89,22 @@ class TfidfRetrievalIndex:
         return len(self._chunks)
 
     def search(self, query: str, k: int = 4) -> list[tuple[Chunk, float]]:
+        """Return the top-k chunks ranked by cosine similarity to ``query``.
+
+        Parameters
+        ----------
+        query : str
+            Free-text search query.
+        k : int, optional
+            Maximum number of results to return. Default is 4.
+
+        Returns
+        -------
+        list[tuple[Chunk, float]]
+            ``(chunk, score)`` pairs in descending order of relevance. Only
+            chunks with a strictly positive cosine similarity are included.
+            Returns an empty list when ``query`` is blank.
+        """
         if not query.strip():
             return []
         query_vec = self._vectorizer.transform([query])

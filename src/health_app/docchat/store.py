@@ -26,11 +26,20 @@ class InMemoryDocumentStore:
     """Thread-safe in-memory store keyed by `document_id`."""
 
     def __init__(self) -> None:
+        """Initialise an empty, thread-safe document store."""
         self._docs: dict[str, _StoredDocument] = {}
         self._lock = threading.Lock()
 
     def add(self, meta: DocumentMeta, chunks: list[Chunk]) -> None:
-        """Insert (or replace) a document and its retrieval index."""
+        """Insert (or replace) a document and build its retrieval index.
+
+        Parameters
+        ----------
+        meta : DocumentMeta
+            Metadata for the document.
+        chunks : list[Chunk]
+            Text chunks extracted from the document.
+        """
         index = TfidfRetrievalIndex(chunks)
         with self._lock:
             self._docs[meta.document_id] = _StoredDocument(
@@ -38,14 +47,45 @@ class InMemoryDocumentStore:
             )
 
     def get(self, document_id: str) -> _StoredDocument | None:
+        """Return the stored document for ``document_id``, or ``None``.
+
+        Parameters
+        ----------
+        document_id : str
+            Identifier assigned at upload time.
+
+        Returns
+        -------
+        _StoredDocument or None
+            The stored document object, or ``None`` if not found.
+        """
         with self._lock:
             return self._docs.get(document_id)
 
     def list_meta(self) -> list[DocumentMeta]:
+        """Return metadata for all stored documents.
+
+        Returns
+        -------
+        list[DocumentMeta]
+            Snapshot of metadata in insertion order.
+        """
         with self._lock:
             return [d.meta for d in self._docs.values()]
 
     def delete(self, document_id: str) -> bool:
-        """Return True if the document existed and was removed."""
+        """Remove a document from the store.
+
+        Parameters
+        ----------
+        document_id : str
+            Identifier of the document to remove.
+
+        Returns
+        -------
+        bool
+            ``True`` if the document existed and was removed, ``False`` if
+            it was not found.
+        """
         with self._lock:
             return self._docs.pop(document_id, None) is not None

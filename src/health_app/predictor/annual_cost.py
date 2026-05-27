@@ -34,12 +34,23 @@ class AnnualPlanShare(BaseModel):
 def apply_plan_to_annual_spend(plan: Plan, charges_cents: int) -> AnnualPlanShare:
     """Distribute annual charges across deductible, coinsurance, and OOP cap.
 
-    Args:
-        plan: The plan whose rules apply.
-        charges_cents: Predicted annual gross charges in cents.
+    Parameters
+    ----------
+    plan : Plan
+        The plan whose cost-share rules apply.
+    charges_cents : int
+        Predicted annual gross charges in cents.
 
-    Returns:
-        An `AnnualPlanShare` breaking down member vs. plan responsibility.
+    Returns
+    -------
+    AnnualPlanShare
+        Breakdown of deductible applied, coinsurance, and total member vs.
+        plan responsibility for the given annual spend.
+
+    Raises
+    ------
+    ValueError
+        If ``charges_cents`` is negative.
     """
     if charges_cents < 0:
         raise ValueError("charges_cents must be non-negative.")

@@ -54,25 +54,39 @@ def sweep(
     values: list[SweepValue],
     plan: Plan | None = None,
 ) -> WhatIfResponse:
-    """Sweep one feature, optionally annotating each point with plan cost-share.
+    """Sweep one feature across a list of values and return the prediction curve.
 
-    Args:
-        predictor: A fitted `CostPredictor`.
-        baseline: Feature vector held constant except for `feature`.
-        feature: Name of the feature to vary. Must be a field of
-            `PredictionFeatures`.
-        values: Values to substitute for `feature`. Each must validate
-            against the field's type.
-        plan: Optional plan. When provided, each prediction's median
-            charges are run through `apply_plan_to_annual_spend` to give
-            an annual out-of-pocket figure alongside the raw prediction.
+    Holds the baseline vector fixed except for ``feature``, substitutes each
+    value in ``values``, and runs batched prediction over all resulting rows.
+    Optionally annotates each point with plan cost-share figures.
 
-    Returns:
-        A `WhatIfResponse` whose `points` are aligned to `values`.
+    Parameters
+    ----------
+    predictor : CostPredictor
+        A fitted :class:`~health_app.predictor.model.CostPredictor`.
+    baseline : PredictionFeatures
+        Feature vector held constant except for ``feature``.
+    feature : str
+        Name of the feature to vary. Must be a field of
+        :class:`~health_app.predictor.schemas.PredictionFeatures`.
+    values : list[SweepValue]
+        Values to substitute for ``feature``. Each must validate against
+        the field's type.
+    plan : Plan or None, optional
+        When provided, each prediction's median and mean charges are run
+        through :func:`~health_app.predictor.annual_cost.apply_plan_to_annual_spend`
+        to give annual out-of-pocket figures alongside the raw predictions.
 
-    Raises:
-        ValueError: If `feature` is not a sweepable field or any value is
-            invalid for that field's type.
+    Returns
+    -------
+    WhatIfResponse
+        Response whose ``points`` are aligned to ``values``.
+
+    Raises
+    ------
+    ValueError
+        If ``feature`` is not a sweepable field or any value in ``values``
+        fails validation against that field's type.
     """
     if feature not in SWEEPABLE_FEATURES:
         raise ValueError(

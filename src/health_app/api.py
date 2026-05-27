@@ -79,16 +79,27 @@ def create_app(
 ) -> FastAPI:
     """Build a FastAPI app wired to the supplied dependencies.
 
-    Args:
-        repository: Catalog source for plans, members, and procedures.
-        predictor: A *fitted* `CostPredictor`. Callers are responsible
-            for training or loading the model before constructing the app.
-        chat_service: Optional document-chat orchestrator. A fresh one
-            is created when not supplied; tests can inject their own.
+    Parameters
+    ----------
+    repository : CatalogRepository
+        Catalog source for plans, members, and procedures.
+    predictor : CostPredictor
+        A *fitted* predictor. Callers are responsible for training or
+        loading the model before constructing the app.
+    chat_service : DocumentChatService or None, optional
+        Document-chat orchestrator. A fresh instance is created when not
+        supplied; tests can inject their own.
 
-    Returns:
+    Returns
+    -------
+    FastAPI
         A configured FastAPI instance ready to be served or wrapped in a
-        TestClient.
+        ``TestClient``.
+
+    Raises
+    ------
+    ValueError
+        If ``predictor`` has not been fitted yet.
     """
     if not predictor.is_fitted:
         raise ValueError(
@@ -130,7 +141,7 @@ def create_app(
 
     @app.get("/healthz", tags=["meta"])
     def healthz() -> dict[str, str]:
-        """Liveness probe."""
+        """Return ``{"status": "ok"}`` for liveness checks."""
         return {"status": "ok"}
 
     # --- benefits routes -------------------------------------------------
@@ -140,6 +151,7 @@ def create_app(
         plan_id: str,
         repo: CatalogRepository = Depends(get_repository),
     ) -> Plan:
+        """Return the plan matching ``plan_id``, or 404 if not found."""
         plan = repo.get_plan(plan_id)
         if plan is None:
             raise HTTPException(
@@ -153,6 +165,7 @@ def create_app(
         member_id: str,
         repo: CatalogRepository = Depends(get_repository),
     ) -> Member:
+        """Return the member matching ``member_id``, or 404 if not found."""
         member = repo.get_member(member_id)
         if member is None:
             raise HTTPException(
@@ -168,6 +181,7 @@ def create_app(
         code: str,
         repo: CatalogRepository = Depends(get_repository),
     ) -> Procedure:
+        """Return the procedure matching ``code``, or 404 if not found."""
         proc = repo.get_procedure(code)
         if proc is None:
             raise HTTPException(
@@ -318,6 +332,7 @@ def create_app(
     def list_documents(
         service: DocumentChatService = Depends(get_chat_service),
     ) -> list[DocumentMeta]:
+        """Return metadata for all currently stored documents."""
         return service.store.list_meta()
 
     @app.delete(
@@ -329,6 +344,7 @@ def create_app(
         document_id: str,
         service: DocumentChatService = Depends(get_chat_service),
     ) -> None:
+        """Delete a document by ID; returns 404 if not found."""
         if not service.store.delete(document_id):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -344,6 +360,7 @@ def create_app(
         request: ChatRequest,
         service: DocumentChatService = Depends(get_chat_service),
     ) -> ChatResponse:
+        """Answer a question against a previously uploaded document."""
         try:
             return service.ask(
                 document_id=request.document_id,
@@ -362,7 +379,25 @@ def create_app(
 def _resolve_plan(
     plan_id: str | None, repo: CatalogRepository
 ) -> Plan | None:
-    """Look up a plan by id; raise 404 if id was provided but not found."""
+    """Look up a plan by ID, raising HTTP 404 if provided but not found.
+
+    Parameters
+    ----------
+    plan_id : str or None
+        The plan identifier to look up, or ``None`` to skip the lookup.
+    repo : CatalogRepository
+        Catalog to query.
+
+    Returns
+    -------
+    Plan or None
+        The resolved plan, or ``None`` when ``plan_id`` is ``None``.
+
+    Raises
+    ------
+    HTTPException
+        With status 404 if ``plan_id`` is provided but not in the catalog.
+    """
     if plan_id is None:
         return None
     plan = repo.get_plan(plan_id)
@@ -379,7 +414,28 @@ def _annual_shares_for(
     prediction: CostPrediction,
     repo: CatalogRepository,
 ) -> tuple[AnnualPlanShare | None, AnnualPlanShare | None]:
-    """Return (median_share, mean_share) for the resolved plan, or (None, None)."""
+    """Compute median and mean annual plan cost-shares for a prediction.
+
+    Parameters
+    ----------
+    plan_id : str or None
+        Plan to evaluate against. Returns ``(None, None)`` when ``None``.
+    prediction : CostPrediction
+        Predicted charges used as annual spend input.
+    repo : CatalogRepository
+        Catalog used to resolve the plan.
+
+    Returns
+    -------
+    tuple[AnnualPlanShare or None, AnnualPlanShare or None]
+        ``(median_share, mean_share)`` when a plan is resolved, else
+        ``(None, None)``.
+
+    Raises
+    ------
+    HTTPException
+        With status 404 if ``plan_id`` is provided but not found.
+    """
     plan = _resolve_plan(plan_id, repo)
     if plan is None:
         return None, None

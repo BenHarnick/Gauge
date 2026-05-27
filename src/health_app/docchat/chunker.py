@@ -20,20 +20,29 @@ def chunk_pages(
 ) -> list[Chunk]:
     """Slice page text into overlapping chunks tagged with page numbers.
 
-    Args:
-        pages: List of (page_number, text) from `extract_pages`.
-        document_id: Identifier to stamp on every produced chunk.
-        chunk_size: Target chunk length in characters.
-        overlap: Number of characters that adjacent chunks share, so a
-            relevant span isn't truncated at a boundary.
+    Parameters
+    ----------
+    pages : list[tuple[int, str]]
+        List of ``(page_number, text)`` pairs from :func:`extract_pages`.
+    document_id : str
+        Identifier stamped on every produced chunk.
+    chunk_size : int, optional
+        Target chunk length in characters. Default is 800.
+    overlap : int, optional
+        Number of characters adjacent chunks share, so a relevant span is
+        not truncated at a boundary. Default is 150.
 
-    Returns:
+    Returns
+    -------
+    list[Chunk]
         Chunks in document order. Empty pages are silently skipped but
-        their existence is honored when reconstructing page numbers.
+        their page numbers are still honoured when computing provenance.
 
-    Raises:
-        ValueError: If chunk_size <= overlap, which would cause an infinite
-            loop in the sliding window.
+    Raises
+    ------
+    ValueError
+        If ``chunk_size <= overlap``, which would cause an infinite loop
+        in the sliding window.
     """
     if chunk_size <= overlap:
         raise ValueError("chunk_size must be greater than overlap.")
@@ -87,7 +96,24 @@ def _pages_for_span(
     span_end: int,
     page_starts: list[tuple[int, int]],
 ) -> list[int]:
-    """Return the sorted page numbers a [start, end) span touches."""
+    """Return the sorted page numbers a character span touches.
+
+    Parameters
+    ----------
+    span_start : int
+        Inclusive start offset in the concatenated document string.
+    span_end : int
+        Exclusive end offset in the concatenated document string.
+    page_starts : list[tuple[int, int]]
+        ``(char_offset, page_number)`` pairs marking where each page begins
+        in the concatenated string.
+
+    Returns
+    -------
+    list[int]
+        Sorted list of 1-indexed page numbers whose text the span
+        ``[span_start, span_end)`` overlaps.
+    """
     pages: set[int] = set()
     for i, (offset, page_number) in enumerate(page_starts):
         next_offset = (

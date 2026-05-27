@@ -36,7 +36,20 @@ class LLMClient(Protocol):
         ...
 
     def answer(self, question: str, contexts: list[Chunk]) -> str:
-        """Return a plain-text answer grounded in the supplied chunks."""
+        """Return a plain-text answer grounded in the supplied chunks.
+
+        Parameters
+        ----------
+        question : str
+            The user's question.
+        contexts : list[Chunk]
+            Retrieved chunks from the retrieval index.
+
+        Returns
+        -------
+        str
+            Plain-text answer.
+        """
         ...
 
 
@@ -50,6 +63,21 @@ class EchoLLM:
     name = "echo"
 
     def answer(self, question: str, contexts: list[Chunk]) -> str:
+        """Format retrieved chunks as a plain-English response.
+
+        Parameters
+        ----------
+        question : str
+            The user's question.
+        contexts : list[Chunk]
+            Retrieved chunks from the retrieval index.
+
+        Returns
+        -------
+        str
+            Formatted plain-text answer with page citations, or a prompt
+            to rephrase if no chunks were provided.
+        """
         if not contexts:
             return (
                 "I couldn't find anything in this document that looks "
@@ -84,6 +112,20 @@ class AnthropicLLM:
     name = "anthropic"
 
     def __init__(self, model: str = "claude-haiku-4-5-20251001") -> None:
+        """Initialise the Anthropic client.
+
+        Parameters
+        ----------
+        model : str, optional
+            Anthropic model identifier. Default is
+            ``"claude-haiku-4-5-20251001"``.
+
+        Raises
+        ------
+        RuntimeError
+            If the ``anthropic`` package is not installed or
+            ``ANTHROPIC_API_KEY`` is not set.
+        """
         try:
             import anthropic  # noqa: F401
         except ImportError as e:
@@ -98,6 +140,21 @@ class AnthropicLLM:
         self._model = model
 
     def answer(self, question: str, contexts: list[Chunk]) -> str:
+        """Answer a question using the Anthropic Messages API.
+
+        Parameters
+        ----------
+        question : str
+            The user's question.
+        contexts : list[Chunk]
+            Retrieved chunks to ground the answer in.
+
+        Returns
+        -------
+        str
+            Synthesised plain-text answer, or a canned "not found" response
+            when ``contexts`` is empty.
+        """
         if not contexts:
             return (
                 "I couldn't find anything in this document that looks "
@@ -132,6 +189,19 @@ class OpenAILLM:
     name = "openai"
 
     def __init__(self, model: str = "gpt-4o-mini") -> None:
+        """Initialise the OpenAI client.
+
+        Parameters
+        ----------
+        model : str, optional
+            OpenAI model identifier. Default is ``"gpt-4o-mini"``.
+
+        Raises
+        ------
+        RuntimeError
+            If the ``openai`` package is not installed or
+            ``OPENAI_API_KEY`` is not set.
+        """
         try:
             import openai  # noqa: F401
         except ImportError as e:
@@ -146,6 +216,21 @@ class OpenAILLM:
         self._model = model
 
     def answer(self, question: str, contexts: list[Chunk]) -> str:
+        """Answer a question using the OpenAI Chat Completions API.
+
+        Parameters
+        ----------
+        question : str
+            The user's question.
+        contexts : list[Chunk]
+            Retrieved chunks to ground the answer in.
+
+        Returns
+        -------
+        str
+            Synthesised plain-text answer, or a canned "not found" response
+            when ``contexts`` is empty.
+        """
         if not contexts:
             return (
                 "I couldn't find anything in this document that looks "
@@ -173,7 +258,20 @@ class OpenAILLM:
 
 
 def auto_select_llm() -> LLMClient:
-    """Pick the strongest LLM that's actually available."""
+    """Pick the strongest LLM backend available at runtime.
+
+    Selection order:
+
+    1. :class:`AnthropicLLM` if ``ANTHROPIC_API_KEY`` is set.
+    2. :class:`OpenAILLM` if ``OPENAI_API_KEY`` is set.
+    3. :class:`EchoLLM` as a no-API-key fallback.
+
+    Returns
+    -------
+    LLMClient
+        A ready-to-use LLM client conforming to the :class:`LLMClient`
+        protocol.
+    """
     if os.environ.get("ANTHROPIC_API_KEY"):
         try:
             return AnthropicLLM()

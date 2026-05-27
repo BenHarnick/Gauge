@@ -79,7 +79,20 @@ class _TrainedPipelines:
 
 
 def _build_quantile_pipeline(quantile: float) -> Pipeline:
-    """Construct a fresh untrained quantile pipeline."""
+    """Construct a fresh untrained quantile-regression pipeline.
+
+    Parameters
+    ----------
+    quantile : float
+        Target quantile in ``(0, 1)`` for the
+        ``HistGradientBoostingRegressor``.
+
+    Returns
+    -------
+    sklearn.pipeline.Pipeline
+        Untrained pipeline with a ``ColumnTransformer`` preprocessor and a
+        quantile-loss gradient-boosted regressor.
+    """
     return _build_pipeline(
         HistGradientBoostingRegressor(
             loss="quantile",
@@ -93,7 +106,14 @@ def _build_quantile_pipeline(quantile: float) -> Pipeline:
 
 
 def _build_mean_pipeline() -> Pipeline:
-    """Construct a fresh untrained mean (squared-error) pipeline."""
+    """Construct a fresh untrained mean (squared-error) pipeline.
+
+    Returns
+    -------
+    sklearn.pipeline.Pipeline
+        Untrained pipeline with a ``ColumnTransformer`` preprocessor and a
+        squared-error gradient-boosted regressor.
+    """
     return _build_pipeline(
         HistGradientBoostingRegressor(
             loss="squared_error",
@@ -106,6 +126,21 @@ def _build_mean_pipeline() -> Pipeline:
 
 
 def _build_pipeline(regressor) -> Pipeline:
+    """Wrap a regressor in a standard preprocessing pipeline.
+
+    Parameters
+    ----------
+    regressor : estimator
+        A scikit-learn regressor conforming to the ``fit``/``predict``
+        interface.
+
+    Returns
+    -------
+    sklearn.pipeline.Pipeline
+        Two-step pipeline: a ``ColumnTransformer`` that one-hot encodes
+        categorical features and passes numerics through, followed by
+        ``regressor``.
+    """
     preprocessor = ColumnTransformer(
         transformers=[
             (
@@ -128,6 +163,21 @@ class CostPredictor:
         self,
         quantiles: tuple[float, float, float] = DEFAULT_QUANTILES,
     ) -> None:
+        """Initialise the predictor with a chosen prediction interval.
+
+        Parameters
+        ----------
+        quantiles : tuple[float, float, float], optional
+            Three strictly increasing values in ``(0, 1)`` representing the
+            lower bound, median, and upper bound of the prediction interval.
+            Defaults to ``(0.1, 0.5, 0.9)``, an 80% prediction interval.
+
+        Raises
+        ------
+        ValueError
+            If the values are not strictly increasing or any value falls
+            outside ``(0, 1)``.
+        """
         lower, point, upper = quantiles
         if not (0.0 < lower < point < upper < 1.0):
             raise ValueError(
@@ -142,7 +192,29 @@ class CostPredictor:
         return self._trained is not None
 
     def fit(self, df: pd.DataFrame, target_column: str = "charges") -> "CostPredictor":
-        """Fit four regressors: three quantile and one mean."""
+        """Fit four regressors on the supplied training data.
+
+        Trains three quantile regressors (lower, median, upper) and one
+        squared-error mean regressor, then stores them in ``_trained``.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Training data. Must include all columns in ``ALL_FEATURES``
+            plus ``target_column``.
+        target_column : str, optional
+            Name of the target column in ``df``. Default is ``"charges"``.
+
+        Returns
+        -------
+        CostPredictor
+            Self, to allow method chaining.
+
+        Raises
+        ------
+        ValueError
+            If any required column is missing from ``df``.
+        """
         missing = set(ALL_FEATURES + [target_column]) - set(df.columns)
         if missing:
             raise ValueError(f"Training data missing columns: {sorted(missing)}")
@@ -163,7 +235,25 @@ class CostPredictor:
         return self
 
     def predict(self, features: PredictionFeatures) -> CostPrediction:
-        """Predict charges for a single feature vector."""
+        """Predict charges for a single feature vector.
+
+        Parameters
+        ----------
+        features : PredictionFeatures
+            Input feature vector for one individual.
+
+        Returns
+        -------
+        CostPrediction
+            Predicted charges with median, mean, lower bound, and upper
+            bound all expressed in cents, clamped to zero and monotonically
+            ordered.
+
+        Raises
+        ------
+        RuntimeError
+            If the predictor has not been fitted yet.
+        """
         if self._trained is None:
             raise RuntimeError("CostPredictor has not been fitted.")
 
@@ -190,7 +280,28 @@ class CostPredictor:
     def predict_many(
         self, feature_rows: list[PredictionFeatures]
     ) -> list[CostPrediction]:
-        """Batch predict for many feature vectors."""
+        """Batch-predict charges for multiple feature vectors.
+
+        Runs all four pipelines once per batch rather than once per row,
+        so dozens of predictions take roughly the same time as a single one.
+
+        Parameters
+        ----------
+        feature_rows : list[PredictionFeatures]
+            Feature vectors for each individual.
+
+        Returns
+        -------
+        list[CostPrediction]
+            Predictions aligned to ``feature_rows``, clamped and ordered
+            identically to :meth:`predict`. Returns an empty list when
+            ``feature_rows`` is empty.
+
+        Raises
+        ------
+        RuntimeError
+            If the predictor has not been fitted yet.
+        """
         if self._trained is None:
             raise RuntimeError("CostPredictor has not been fitted.")
         if not feature_rows:
@@ -218,6 +329,18 @@ class CostPredictor:
         ]
 
     def save(self, path: Path | str) -> None:
+        """Serialise the fitted predictor to disk with :mod:`joblib`.
+
+        Parameters
+        ----------
+        path : Path or str
+            Destination file path. Parent directories must exist.
+
+        Raises
+        ------
+        RuntimeError
+            If the predictor has not been fitted yet.
+        """
         if self._trained is None:
             raise RuntimeError("Nothing to save; predictor has not been fitted.")
         joblib.dump(
@@ -230,6 +353,18 @@ class CostPredictor:
 
     @classmethod
     def load(cls, path: Path | str) -> "CostPredictor":
+        """Deserialise a predictor previously saved with :meth:`save`.
+
+        Parameters
+        ----------
+        path : Path or str
+            Path to the ``.joblib`` file written by :meth:`save`.
+
+        Returns
+        -------
+        CostPredictor
+            A fully fitted predictor ready to call :meth:`predict`.
+        """
         blob = joblib.load(path)
         inst = cls(quantiles=tuple(blob["quantiles"]))
         inst._trained = _TrainedPipelines(pipelines=blob["pipelines"])
@@ -237,8 +372,32 @@ class CostPredictor:
 
 
 def _features_to_dataframe(features: PredictionFeatures) -> pd.DataFrame:
+    """Convert a single feature vector into a one-row DataFrame.
+
+    Parameters
+    ----------
+    features : PredictionFeatures
+        Input feature vector.
+
+    Returns
+    -------
+    pd.DataFrame
+        Single-row DataFrame with columns ordered as ``ALL_FEATURES``.
+    """
     return pd.DataFrame([features.model_dump()])[ALL_FEATURES]
 
 
 def _dollars_to_cents(amount: float) -> int:
+    """Round a dollar amount to the nearest whole cent, clamped at zero.
+
+    Parameters
+    ----------
+    amount : float
+        Dollar amount to convert.
+
+    Returns
+    -------
+    int
+        Equivalent amount in cents, never negative.
+    """
     return max(0, int(round(amount * 100)))

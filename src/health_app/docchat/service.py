@@ -26,17 +26,40 @@ class DocumentChatService:
         store: InMemoryDocumentStore | None = None,
         llm: LLMClient | None = None,
     ) -> None:
+        """Initialise the service with a document store and LLM client.
+
+        Parameters
+        ----------
+        store : InMemoryDocumentStore or None, optional
+            Document store to use. A fresh :class:`InMemoryDocumentStore`
+            is created when not supplied.
+        llm : LLMClient or None, optional
+            LLM backend for answering questions. Defaults to
+            :class:`EchoLLM` when not supplied.
+        """
         self.store = store or InMemoryDocumentStore()
         self.llm = llm or EchoLLM()
 
     def upload_pdf(self, filename: str, pdf_bytes: bytes) -> DocumentMeta:
         """Extract, chunk, index, and persist a PDF.
 
-        Returns:
-            Metadata for the newly stored document.
+        Parameters
+        ----------
+        filename : str
+            Original filename stored in metadata and shown to clients.
+        pdf_bytes : bytes
+            Raw PDF file contents.
 
-        Raises:
-            ValueError: If the PDF cannot be parsed or contains no text.
+        Returns
+        -------
+        DocumentMeta
+            Metadata for the newly stored document, including its assigned
+            ``document_id``.
+
+        Raises
+        ------
+        ValueError
+            If the PDF cannot be parsed or contains no extractable text.
         """
         pages = extract_pages(pdf_bytes)
         if not pages:
@@ -63,10 +86,26 @@ class DocumentChatService:
     def ask(
         self, document_id: str, question: str, top_k: int = 4
     ) -> ChatResponse:
-        """Answer a question against an uploaded document.
+        """Answer a question against a previously uploaded document.
 
-        Raises:
-            KeyError: If no document with `document_id` exists.
+        Parameters
+        ----------
+        document_id : str
+            Identifier returned by :meth:`upload_pdf`.
+        question : str
+            Free-text question from the user.
+        top_k : int, optional
+            Number of chunks to retrieve and pass to the LLM. Default is 4.
+
+        Returns
+        -------
+        ChatResponse
+            Answer text, citations, and the LLM identifier used.
+
+        Raises
+        ------
+        KeyError
+            If no document with ``document_id`` exists in the store.
         """
         stored = self.store.get(document_id)
         if stored is None:
@@ -94,7 +133,20 @@ class DocumentChatService:
 
 
 def _short(text: str) -> str:
-    """Single-line preview of a chunk for the UI."""
+    """Produce a single-line preview of a chunk for the UI.
+
+    Parameters
+    ----------
+    text : str
+        Raw chunk text, potentially multiline.
+
+    Returns
+    -------
+    str
+        Whitespace-collapsed string truncated to at most
+        ``CITATION_SNIPPET_LEN`` characters, with ``"..."`` appended if
+        truncated.
+    """
     cleaned = " ".join(text.split())
     if len(cleaned) <= CITATION_SNIPPET_LEN:
         return cleaned
