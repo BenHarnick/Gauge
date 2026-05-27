@@ -56,7 +56,8 @@ class PredictResponse(BaseModel):
     """POST /predict response."""
 
     prediction: CostPrediction
-    annual_plan_share: AnnualPlanShare | None = None
+    annual_plan_share_median: AnnualPlanShare | None = None
+    annual_plan_share_mean: AnnualPlanShare | None = None
 
 
 class WhatIfRequest(BaseModel):
@@ -227,10 +228,13 @@ def create_app(
     ) -> PredictResponse:
         """Predict annual medical charges; optionally annotate with plan OOP."""
         prediction = model.predict(request.features)
-        annual_share = _annual_share_for(request.plan_id, prediction, repo)
+        share_median, share_mean = _annual_shares_for(
+            request.plan_id, prediction, repo
+        )
         return PredictResponse(
             prediction=prediction,
-            annual_plan_share=annual_share,
+            annual_plan_share_median=share_median,
+            annual_plan_share_mean=share_mean,
         )
 
     @app.post(
@@ -370,12 +374,19 @@ def _resolve_plan(
     return plan
 
 
-def _annual_share_for(
+def _annual_shares_for(
     plan_id: str | None,
     prediction: CostPrediction,
     repo: CatalogRepository,
-) -> AnnualPlanShare | None:
+) -> tuple[AnnualPlanShare | None, AnnualPlanShare | None]:
+    """Return (median_share, mean_share) for the resolved plan, or (None, None)."""
     plan = _resolve_plan(plan_id, repo)
     if plan is None:
-        return None
-    return apply_plan_to_annual_spend(plan, prediction.predicted_charges_cents)
+        return None, None
+    median_share = apply_plan_to_annual_spend(
+        plan, prediction.median_charges_cents
+    )
+    mean_share = apply_plan_to_annual_spend(
+        plan, prediction.mean_charges_cents
+    )
+    return median_share, mean_share

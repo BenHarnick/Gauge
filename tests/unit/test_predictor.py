@@ -45,8 +45,8 @@ def test_prediction_interval_is_ordered_and_nonneg(
 ) -> None:
     pred = trained_predictor.predict(baseline_features)
     assert 0 <= pred.lower_bound_cents
-    assert pred.lower_bound_cents <= pred.predicted_charges_cents
-    assert pred.predicted_charges_cents <= pred.upper_bound_cents
+    assert pred.lower_bound_cents <= pred.median_charges_cents
+    assert pred.median_charges_cents <= pred.upper_bound_cents
 
 
 def test_smoker_costs_more_than_non_smoker(
@@ -55,10 +55,10 @@ def test_smoker_costs_more_than_non_smoker(
 ) -> None:
     """Directional sanity check; small dataset, so we only test the sign."""
     smoker = baseline_features.model_copy(update={"smoker": "yes"})
-    smoker_pred = trained_predictor.predict(smoker).predicted_charges_cents
+    smoker_pred = trained_predictor.predict(smoker).median_charges_cents
     nonsmoker_pred = trained_predictor.predict(
         baseline_features
-    ).predicted_charges_cents
+    ).median_charges_cents
     assert smoker_pred > nonsmoker_pred
 
 
@@ -69,8 +69,8 @@ def test_higher_age_generally_costs_more(
     young = baseline_features.model_copy(update={"age": 22})
     older = baseline_features.model_copy(update={"age": 60})
     assert (
-        trained_predictor.predict(older).predicted_charges_cents
-        > trained_predictor.predict(young).predicted_charges_cents
+        trained_predictor.predict(older).median_charges_cents
+        > trained_predictor.predict(young).median_charges_cents
     )
 
 

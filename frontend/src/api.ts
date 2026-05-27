@@ -22,7 +22,8 @@ export interface PredictionFeatures {
 }
 
 export interface CostPrediction {
-  predicted_charges_cents: number;
+  median_charges_cents: number;
+  mean_charges_cents: number;
   lower_bound_cents: number;
   upper_bound_cents: number;
 }
@@ -38,7 +39,8 @@ export interface AnnualPlanShare {
 
 export interface PredictResponse {
   prediction: CostPrediction;
-  annual_plan_share: AnnualPlanShare | null;
+  annual_plan_share_median: AnnualPlanShare | null;
+  annual_plan_share_mean: AnnualPlanShare | null;
 }
 
 export type SweepFeature =
@@ -52,7 +54,8 @@ export type SweepFeature =
 export interface WhatIfPoint {
   value: number | string;
   prediction: CostPrediction;
-  annual_plan_share: AnnualPlanShare | null;
+  annual_plan_share_median: AnnualPlanShare | null;
+  annual_plan_share_mean: AnnualPlanShare | null;
 }
 
 export interface WhatIfResponse {

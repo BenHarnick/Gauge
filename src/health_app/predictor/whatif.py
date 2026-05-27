@@ -34,7 +34,8 @@ class WhatIfPoint(BaseModel):
 
     value: SweepValue
     prediction: CostPrediction
-    annual_plan_share: AnnualPlanShare | None = None
+    annual_plan_share_median: AnnualPlanShare | None = None
+    annual_plan_share_mean: AnnualPlanShare | None = None
 
 
 class WhatIfResponse(BaseModel):
@@ -99,18 +100,22 @@ def sweep(
 
     points: list[WhatIfPoint] = []
     for value, prediction in zip(values, predictions):
-        annual_share = (
-            apply_plan_to_annual_spend(
-                plan, prediction.predicted_charges_cents
+        if plan is not None:
+            share_median = apply_plan_to_annual_spend(
+                plan, prediction.median_charges_cents
             )
-            if plan is not None
-            else None
-        )
+            share_mean = apply_plan_to_annual_spend(
+                plan, prediction.mean_charges_cents
+            )
+        else:
+            share_median = None
+            share_mean = None
         points.append(
             WhatIfPoint(
                 value=value,
                 prediction=prediction,
-                annual_plan_share=annual_share,
+                annual_plan_share_median=share_median,
+                annual_plan_share_mean=share_mean,
             )
         )
 

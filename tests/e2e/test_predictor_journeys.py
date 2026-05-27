@@ -46,8 +46,8 @@ def test_journey_quit_smoking_lowers_predicted_cost(
         json={"features": _baseline_payload() | {"smoker": "no"}},
     ).json()
     assert (
-        nonsmoker["prediction"]["predicted_charges_cents"]
-        < smoker["prediction"]["predicted_charges_cents"]
+        nonsmoker["prediction"]["median_charges_cents"]
+        < smoker["prediction"]["median_charges_cents"]
     )
 
 
@@ -65,13 +65,13 @@ def test_journey_age_sweep_under_a_plan(client: TestClient) -> None:
     points = response["points"]
     assert len(points) == 5
 
-    charges = [p["prediction"]["predicted_charges_cents"] for p in points]
+    charges = [p["prediction"]["median_charges_cents"] for p in points]
     # Endpoints trend up.
     assert charges[-1] > charges[0]
 
     # Every point has an annual plan share that adds up correctly.
     for p in points:
-        share = p["annual_plan_share"]
+        share = p["annual_plan_share_median"]
         assert (
             share["member_pays_cents"] + share["plan_pays_cents"]
             == share["charges_cents"]
@@ -91,11 +91,11 @@ def test_journey_predict_then_apply_plan_matches_separate_endpoints(
     ).json()
 
     assert (
-        with_plan["prediction"]["predicted_charges_cents"]
-        == without_plan["prediction"]["predicted_charges_cents"]
+        with_plan["prediction"]["median_charges_cents"]
+        == without_plan["prediction"]["median_charges_cents"]
     )
-    share = with_plan["annual_plan_share"]
+    share = with_plan["annual_plan_share_median"]
     assert (
         share["charges_cents"]
-        == with_plan["prediction"]["predicted_charges_cents"]
+        == with_plan["prediction"]["median_charges_cents"]
     )

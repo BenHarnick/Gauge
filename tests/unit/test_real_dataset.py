@@ -62,6 +62,6 @@ def test_real_csv_predictor_directional_sanity() -> None:
     smoker = base.model_copy(update={"smoker": "yes"})
     older = base.model_copy(update={"age": 60})
 
-    base_pred = predictor.predict(base).predicted_charges_cents
-    assert predictor.predict(smoker).predicted_charges_cents > base_pred
-    assert predictor.predict(older).predicted_charges_cents > base_pred
+    base_pred = predictor.predict(base).median_charges_cents
+    assert predictor.predict(smoker).median_charges_cents > base_pred
+    assert predictor.predict(older).median_charges_cents > base_pred

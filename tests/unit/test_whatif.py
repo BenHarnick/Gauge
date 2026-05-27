@@ -38,7 +38,8 @@ def test_sweep_returns_one_point_per_value(
     )
     assert response.feature == "age"
     assert [p.value for p in response.points] == values
-    assert all(p.annual_plan_share is None for p in response.points)
+    assert all(p.annual_plan_share_median is None for p in response.points)
+    assert all(p.annual_plan_share_mean is None for p in response.points)
 
 
 def test_sweep_empty_values_returns_empty(
@@ -64,7 +65,7 @@ def test_sweep_charges_increase_with_age(
         feature="age",
         values=[20, 40, 60],
     )
-    charges = [p.prediction.predicted_charges_cents for p in response.points]
+    charges = [p.prediction.median_charges_cents for p in response.points]
     assert charges[0] < charges[2]
 
 
@@ -82,11 +83,17 @@ def test_sweep_with_plan_includes_annual_plan_share(
     )
     assert len(response.points) == 2
     for point in response.points:
-        assert point.annual_plan_share is not None
+        assert point.annual_plan_share_median is not None
+        assert point.annual_plan_share_mean is not None
         assert (
-            point.annual_plan_share.member_pays_cents
-            + point.annual_plan_share.plan_pays_cents
-            == point.prediction.predicted_charges_cents
+            point.annual_plan_share_median.member_pays_cents
+            + point.annual_plan_share_median.plan_pays_cents
+            == point.prediction.median_charges_cents
+        )
+        assert (
+            point.annual_plan_share_mean.member_pays_cents
+            + point.annual_plan_share_mean.plan_pays_cents
+            == point.prediction.mean_charges_cents
         )
 
 

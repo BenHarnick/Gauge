@@ -39,9 +39,11 @@ class TestPredict:
         assert response.status_code == 200
         body = response.json()
         pred = body["prediction"]
-        assert pred["lower_bound_cents"] <= pred["predicted_charges_cents"]
-        assert pred["predicted_charges_cents"] <= pred["upper_bound_cents"]
-        assert body["annual_plan_share"] is None
+        assert pred["lower_bound_cents"] <= pred["median_charges_cents"]
+        assert pred["median_charges_cents"] <= pred["upper_bound_cents"]
+        assert pred["mean_charges_cents"] >= 0
+        assert body["annual_plan_share_median"] is None
+        assert body["annual_plan_share_mean"] is None
 
     def test_predict_with_plan_returns_annual_share(
         self, client: TestClient
@@ -55,11 +57,16 @@ class TestPredict:
         )
         assert response.status_code == 200
         body = response.json()
-        share = body["annual_plan_share"]
-        assert share is not None
+        share_median = body["annual_plan_share_median"]
+        share_mean = body["annual_plan_share_mean"]
+        assert share_median is not None and share_mean is not None
         assert (
-            share["member_pays_cents"] + share["plan_pays_cents"]
-            == share["charges_cents"]
+            share_median["member_pays_cents"] + share_median["plan_pays_cents"]
+            == share_median["charges_cents"]
+        )
+        assert (
+            share_mean["member_pays_cents"] + share_mean["plan_pays_cents"]
+            == share_mean["charges_cents"]
         )
 
     def test_predict_unknown_plan_404(self, client: TestClient) -> None:
@@ -113,7 +120,8 @@ class TestWhatIf:
         )
         assert response.status_code == 200
         for point in response.json()["points"]:
-            assert point["annual_plan_share"] is not None
+            assert point["annual_plan_share_median"] is not None
+            assert point["annual_plan_share_mean"] is not None
 
     def test_whatif_rejects_unknown_feature(self, client: TestClient) -> None:
         response = client.post(

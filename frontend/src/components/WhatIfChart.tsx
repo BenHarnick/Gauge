@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import {
   CartesianGrid,
+  Legend,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -19,10 +20,12 @@ interface WhatIfChartProps {
 
 interface ChartPoint {
   value: number | string;
-  predicted: number;
+  median: number;
+  mean: number;
   lower: number;
   upper: number;
-  memberPays: number | null;
+  memberPaysMedian: number | null;
+  memberPaysMean: number | null;
 }
 
 export function WhatIfChart({ data, loading, error, feature }: WhatIfChartProps) {
@@ -30,12 +33,17 @@ export function WhatIfChart({ data, loading, error, feature }: WhatIfChartProps)
     if (!data) return [];
     return data.points.map((p) => ({
       value: p.value,
-      predicted: p.prediction.predicted_charges_cents / 100,
+      median: p.prediction.median_charges_cents / 100,
+      mean: p.prediction.mean_charges_cents / 100,
       lower: p.prediction.lower_bound_cents / 100,
       upper: p.prediction.upper_bound_cents / 100,
-      memberPays:
-        p.annual_plan_share != null
-          ? p.annual_plan_share.member_pays_cents / 100
+      memberPaysMedian:
+        p.annual_plan_share_median != null
+          ? p.annual_plan_share_median.member_pays_cents / 100
+          : null,
+      memberPaysMean:
+        p.annual_plan_share_mean != null
+          ? p.annual_plan_share_mean.member_pays_cents / 100
           : null,
     }));
   }, [data]);
@@ -66,8 +74,10 @@ export function WhatIfChart({ data, loading, error, feature }: WhatIfChartProps)
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
       <div className="mb-2 text-sm text-slate-600">
         Charges and member out-of-pocket as <strong>{feature}</strong> varies.
+        Solid lines are point estimates; dashed lines are the 10th and 90th
+        percentile bounds.
       </div>
-      <div className="h-72 w-full">
+      <div className="h-80 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={rows} margin={{ top: 10, right: 16, bottom: 0, left: 0 }}>
             <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" />
@@ -91,11 +101,20 @@ export function WhatIfChart({ data, loading, error, feature }: WhatIfChartProps)
               labelFormatter={(label) => `${feature} = ${label}`}
               contentStyle={{ fontSize: 12 }}
             />
+            <Legend wrapperStyle={{ fontSize: 12 }} />
             <Line
               type="monotone"
-              dataKey="predicted"
-              name="Predicted charges"
+              dataKey="median"
+              name="Median charges"
               stroke="#1d4ed8"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+            />
+            <Line
+              type="monotone"
+              dataKey="mean"
+              name="Mean charges"
+              stroke="#7c3aed"
               strokeWidth={2}
               dot={{ r: 3 }}
             />
@@ -115,11 +134,11 @@ export function WhatIfChart({ data, loading, error, feature }: WhatIfChartProps)
               strokeDasharray="3 3"
               dot={false}
             />
-            {rows[0].memberPays != null && (
+            {rows[0].memberPaysMean != null && (
               <Line
                 type="monotone"
-                dataKey="memberPays"
-                name="You would pay"
+                dataKey="memberPaysMean"
+                name="You pay (mean)"
                 stroke="#059669"
                 strokeWidth={2}
                 dot={{ r: 3 }}
