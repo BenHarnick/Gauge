@@ -25,9 +25,11 @@ from health_app.api import create_app
 from health_app.benefits.seed import build_default_repository
 from health_app.docchat.llm import auto_select_llm
 from health_app.docchat.service import DocumentChatService
+from health_app.plan_extract.extractor import PlanExtractor
 from health_app.predictor.dataset import load_dataset
 from health_app.predictor.meps import load_meps
 from health_app.predictor.model import CostPredictor
+from health_app.session.store import InMemorySessionStore
 
 # Paths to optional local datasets. Resolved relative to this file so they
 # work regardless of the current working directory.
@@ -134,8 +136,13 @@ def _load_or_train_predictor() -> CostPredictor:
     return predictor
 
 
+_llm = auto_select_llm()
+_chat_service = DocumentChatService(llm=_llm)
+
 app = create_app(
     repository=build_default_repository(),
     predictor=_load_or_train_predictor(),
-    chat_service=DocumentChatService(llm=auto_select_llm()),
+    chat_service=_chat_service,
+    session_store=InMemorySessionStore(),
+    plan_extractor=PlanExtractor(llm=_llm),
 )

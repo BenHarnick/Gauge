@@ -21,6 +21,9 @@ src/health_app/docchat/llm.py
 src/health_app/docchat/schemas.py
 src/health_app/docchat/service.py
 src/health_app/docchat/store.py
+src/health_app/plan_extract/__init__.py
+src/health_app/plan_extract/extractor.py
+src/health_app/plan_extract/schemas.py
 src/health_app/predictor/__init__.py
 src/health_app/predictor/annual_cost.py
 src/health_app/predictor/dataset.py
@@ -28,3 +31,6 @@ src/health_app/predictor/meps.py
 src/health_app/predictor/model.py
 src/health_app/predictor/schemas.py
 src/health_app/predictor/whatif.py
+src/health_app/session/__init__.py
+src/health_app/session/models.py
+src/health_app/session/store.py

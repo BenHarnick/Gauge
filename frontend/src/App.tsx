@@ -1,10 +1,17 @@
 import { useState } from "react";
 import { DocChatPage } from "./components/DocChatPage";
+import { IntakeWizard } from "./components/IntakeWizard";
 import { PredictorPage } from "./components/PredictorPage";
 
-type Tab = "predictor" | "docchat";
+type Tab = "guided" | "predictor" | "docchat";
 
 const TABS: { id: Tab; label: string; description: string }[] = [
+  {
+    id: "guided",
+    label: "Get my estimate",
+    description:
+      "Step-by-step guided flow: enter your details, upload your plan PDF, and get a personalised cost estimate with a full plan cost-share breakdown.",
+  },
   {
     id: "predictor",
     label: "Cost predictor",
@@ -20,7 +27,7 @@ const TABS: { id: Tab; label: string; description: string }[] = [
 ];
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("predictor");
+  const [tab, setTab] = useState<Tab>("guided");
   const active = TABS.find((t) => t.id === tab)!;
 
   return (
@@ -58,7 +65,13 @@ export default function App() {
         </p>
       </header>
 
-      {tab === "predictor" ? <PredictorPage /> : <DocChatPage />}
+      {tab === "guided" ? (
+        <IntakeWizard />
+      ) : tab === "predictor" ? (
+        <PredictorPage />
+      ) : (
+        <DocChatPage />
+      )}
 
       <footer className="mt-10 text-xs text-slate-500">
         Backend at{" "}
