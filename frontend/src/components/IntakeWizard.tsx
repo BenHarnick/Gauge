@@ -185,7 +185,7 @@ function Step1Demographics({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-5 rounded-lg border border-slate-200 bg-white p-6 shadow-sm sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 rounded-xl border border-slate-200 bg-white p-6 shadow-card sm:grid-cols-2">
         <Slider label="Age" min={18} max={64} value={features.age}
           onChange={(v) => update("age", v)} format={(v) => `${v} yrs`} />
         <Toggle<Sex> label="Sex" value={features.sex}
@@ -480,7 +480,7 @@ function Step3Confirm({
         </details>
       )}
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-card">
         <label className="mb-5 flex flex-col gap-1 text-sm">
           <span className="font-medium text-slate-700">Plan name</span>
           <input
@@ -734,8 +734,8 @@ function Step4Estimate({
       </div>
 
       {/* Prediction + plan breakdown */}
-      <div className="overflow-hidden rounded-lg border border-slate-200 shadow-sm">
-        <div className="grid grid-cols-1 gap-px bg-slate-200 sm:grid-cols-2">
+      <div className="overflow-hidden rounded-xl border border-slate-200 shadow-card">
+        <div className="grid grid-cols-1 gap-px bg-slate-100 sm:grid-cols-2">
           <EstimateBlock
             title="Typical year (median)"
             chargesCents={prediction.median_charges_cents}

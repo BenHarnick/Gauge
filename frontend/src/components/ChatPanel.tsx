@@ -57,7 +57,7 @@ export function ChatPanel({ document }: ChatPanelProps) {
   }
 
   return (
-    <div className="flex h-[32rem] flex-col rounded-lg border border-slate-200 bg-white shadow-sm">
+    <div className="flex h-[32rem] flex-col rounded-xl border border-slate-200 bg-white shadow-card">
       <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
         {turns.length === 0 ? (
           <div className="text-sm text-slate-500">

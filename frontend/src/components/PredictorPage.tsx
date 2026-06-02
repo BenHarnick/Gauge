@@ -122,7 +122,7 @@ export function PredictorPage() {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[20rem_1fr]">
-      <aside className="space-y-5 rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <aside className="space-y-5 rounded-xl border border-slate-200 bg-white p-5 shadow-card">
         <Slider
           label="Age"
           min={18}

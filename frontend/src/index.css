@@ -1,15 +1,70 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Native range inputs look terrible by default; bring them in line. */
-input[type="range"] {
-  @apply h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-200;
+/* ------------------------------------------------------------------ */
+/* Base                                                                  */
+/* ------------------------------------------------------------------ */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+body {
+  @apply bg-slate-50 text-slate-900;
+}
+
+/* Smooth transitions on interactive elements */
+button,
+input,
+select,
+textarea {
+  transition-property: color, background-color, border-color, box-shadow, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Range inputs                                                          */
+/* ------------------------------------------------------------------ */
+
+input[type="range"] {
+  @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200;
+}
+
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
-  @apply h-5 w-5 rounded-full bg-brand-600 shadow ring-2 ring-white;
+  @apply h-4 w-4 rounded-full bg-brand-600 shadow-sm ring-2 ring-white cursor-grab;
 }
+
+input[type="range"]::-webkit-slider-thumb:active {
+  @apply cursor-grabbing;
+}
+
 input[type="range"]::-moz-range-thumb {
-  @apply h-5 w-5 rounded-full border-0 bg-brand-600 shadow;
+  @apply h-4 w-4 rounded-full border-0 bg-brand-600 shadow-sm cursor-grab;
+}
+
+/* ------------------------------------------------------------------ */
+/* Skeleton shimmer animation                                            */
+/* ------------------------------------------------------------------ */
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #e2e8f0 25%,
+    #f1f5f9 50%,
+    #e2e8f0 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  @apply rounded;
 }

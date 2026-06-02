@@ -15,7 +15,7 @@ export function Select<T extends string>({
     <label className="flex flex-col gap-1.5 text-sm">
       <span className="font-medium text-slate-700">{label}</span>
       <select
-        className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-card focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200"
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
       >

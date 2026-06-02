@@ -18,10 +18,12 @@ export function Slider({
   format = (v) => String(v),
 }: SliderProps) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm">
+    <label className="flex flex-col gap-2 text-sm">
       <div className="flex items-baseline justify-between">
         <span className="font-medium text-slate-700">{label}</span>
-        <span className="tabular-nums text-slate-900">{format(value)}</span>
+        <span className="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-semibold tabular-nums text-brand-700">
+          {format(value)}
+        </span>
       </div>
       <input
         type="range"

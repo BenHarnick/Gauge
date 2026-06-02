@@ -50,7 +50,7 @@ export function WhatIfChart({ data, loading, error, feature }: WhatIfChartProps)
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm text-slate-500">
+      <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500">
         Running what-if sweep...
       </div>
     );
@@ -64,14 +64,14 @@ export function WhatIfChart({ data, loading, error, feature }: WhatIfChartProps)
   }
   if (rows.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
+      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
         Pick a feature to sweep and the curve will render here.
       </div>
     );
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-card">
       <div className="mb-2 text-sm text-slate-600">
         Charges and member out-of-pocket as <strong>{feature}</strong> varies.
         Solid lines are point estimates; dashed lines are the 10th and 90th
