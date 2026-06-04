@@ -55,6 +55,24 @@ class TestUpload:
         )
         assert response.status_code == 415
 
+    def test_upload_oversized_file_413(self, client: TestClient) -> None:
+        from health_app.api import MAX_PDF_BYTES
+
+        oversized = b"%" * (MAX_PDF_BYTES + 1)
+        response = client.post(
+            "/documents",
+            files={"file": ("big.pdf", oversized, "application/pdf")},
+        )
+        assert response.status_code == 413
+
+    def test_upload_unparseable_pdf_400(self, client: TestClient) -> None:
+        """Bytes that claim to be PDF but fail parsing return 400."""
+        response = client.post(
+            "/documents",
+            files={"file": ("bad.pdf", b"not-a-pdf-at-all", "application/pdf")},
+        )
+        assert response.status_code == 400
+
 
 class TestListAndDelete:
     def test_list_starts_empty(self, client: TestClient) -> None:

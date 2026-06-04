@@ -51,3 +51,25 @@ def test_index_filters_zero_similarity() -> None:
     results = index.search("xyzzy unrelated query", k=5)
     # All scores should be zero (no overlap), so search returns nothing.
     assert results == []
+
+
+def test_size_property_matches_chunk_count() -> None:
+    chunks = [
+        _chunk(0, "deductible applies annually", [1]),
+        _chunk(1, "copay required per visit", [2]),
+        _chunk(2, "coinsurance twenty percent", [3]),
+    ]
+    index = TfidfRetrievalIndex(chunks)
+    assert index.size == 3
+
+
+def test_stop_words_only_content_falls_back_gracefully() -> None:
+    """When all tokens are English stop words the index rebuilds without the filter."""
+    # These are all common English stop words that TfidfVectorizer would strip.
+    chunks = [_chunk(0, "a the is in on at by", [1])]
+    # Should not raise; the fallback vectorizer handles it.
+    index = TfidfRetrievalIndex(chunks)
+    assert index.size == 1
+    # Search should still return something (vocabulary is now the stop words).
+    results = index.search("a the", k=1)
+    assert isinstance(results, list)

@@ -20,6 +20,7 @@ src/health_app/docchat/index.py
 src/health_app/docchat/llm.py
 src/health_app/docchat/schemas.py
 src/health_app/docchat/service.py
+src/health_app/docchat/sqlite_store.py
 src/health_app/docchat/store.py
 src/health_app/plan_extract/__init__.py
 src/health_app/plan_extract/extractor.py
@@ -33,4 +34,5 @@ src/health_app/predictor/schemas.py
 src/health_app/predictor/whatif.py
 src/health_app/session/__init__.py
 src/health_app/session/models.py
+src/health_app/session/sqlite_store.py
 src/health_app/session/store.py

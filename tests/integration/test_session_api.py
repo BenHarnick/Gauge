@@ -198,6 +198,25 @@ class TestAttachDocument:
         )
         assert resp.status_code == 415
 
+    def test_oversized_pdf_returns_413(self, client: TestClient) -> None:
+        from health_app.api import MAX_PDF_BYTES
+
+        sid = _create_session(client)
+        oversized = b"%" * (MAX_PDF_BYTES + 1)
+        resp = client.post(
+            f"/sessions/{sid}/document",
+            files={"file": ("big.pdf", io.BytesIO(oversized), "application/pdf")},
+        )
+        assert resp.status_code == 413
+
+    def test_unparseable_pdf_returns_400(self, client: TestClient) -> None:
+        sid = _create_session(client)
+        resp = client.post(
+            f"/sessions/{sid}/document",
+            files={"file": ("bad.pdf", io.BytesIO(b"not-a-real-pdf"), "application/pdf")},
+        )
+        assert resp.status_code == 400
+
 
 # ---------------------------------------------------------------------------
 # GET /sessions/{id}/plan-draft
@@ -401,6 +420,15 @@ class TestSessionWhatIf:
         assert resp.status_code == 200
         assert resp.json()["points"] == []
 
+    def test_out_of_range_value_returns_400(self, client: TestClient) -> None:
+        """sweep() raises ValueError for invalid values; endpoint maps it to 400."""
+        sid = _create_session(client)
+        resp = client.post(
+            f"/sessions/{sid}/whatif",
+            json={"feature": "age", "values": [-999]},
+        )
+        assert resp.status_code == 400
+
 
 # ---------------------------------------------------------------------------
 # POST /sessions/{id}/chat
@@ -471,3 +499,22 @@ class TestSessionChat:
             json={"question": "What is the copay?", "top_k": 99},
         )
         assert resp.status_code == 422
+
+    def test_chat_document_deleted_after_attach_returns_404(
+        self, client: TestClient, sample_plan_pdf_bytes: bytes
+    ) -> None:
+        """If the document is deleted from the store after attachment, chat returns 404."""
+        sid = _create_session(client)
+        upload_body = _upload_pdf(client, sid, sample_plan_pdf_bytes)
+        doc_id = upload_body["document_id"]
+
+        # Delete the document from the store.
+        del_resp = client.delete(f"/documents/{doc_id}")
+        assert del_resp.status_code == 204
+
+        # Chat now references a session whose document no longer exists.
+        resp = client.post(
+            f"/sessions/{sid}/chat",
+            json={"question": "What is covered?"},
+        )
+        assert resp.status_code == 404

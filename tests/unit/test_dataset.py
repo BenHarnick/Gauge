@@ -43,3 +43,41 @@ def test_smokers_have_higher_average_charges() -> None:
     smoker_mean = df.loc[df["smoker"] == "yes", "charges"].mean()
     nonsmoker_mean = df.loc[df["smoker"] == "no", "charges"].mean()
     assert smoker_mean > nonsmoker_mean * 2
+
+
+def test_load_csv_raises_on_missing_columns(tmp_path) -> None:
+    import pandas as pd
+
+    from health_app.predictor.dataset import load_csv
+
+    bad_csv = tmp_path / "bad.csv"
+    pd.DataFrame({"age": [30], "bmi": [25.0]}).to_csv(bad_csv, index=False)
+    with pytest.raises(ValueError, match="missing expected columns"):
+        load_csv(bad_csv)
+
+
+def test_load_dataset_with_csv_path_returns_dataframe(tmp_path) -> None:
+    """load_dataset delegates to load_csv when csv_path is provided."""
+    import pandas as pd
+
+    from health_app.predictor.dataset import (
+        FEATURE_COLUMNS,
+        TARGET_COLUMN,
+        load_dataset,
+    )
+
+    # Build a minimal valid CSV using the real insurance.csv column names
+    # (cardinal directions; the loader remaps them).
+    rows = [
+        {
+            "age": 30, "sex": "male", "bmi": 25.0,
+            "children": 0, "smoker": "no", "region": "northwest",
+            "charges": 4000.0,
+        }
+    ]
+    csv_path = tmp_path / "insurance.csv"
+    pd.DataFrame(rows).to_csv(csv_path, index=False)
+
+    df = load_dataset(csv_path=csv_path)
+    assert list(df.columns) == FEATURE_COLUMNS + [TARGET_COLUMN]
+    assert df.iloc[0]["region"] == "midwest"  # northwest -> midwest via KAGGLE_REGION_MAP

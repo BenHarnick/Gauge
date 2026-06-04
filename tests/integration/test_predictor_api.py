@@ -44,6 +44,8 @@ class TestPredict:
         assert pred["mean_charges_cents"] >= 0
         assert body["annual_plan_share_median"] is None
         assert body["annual_plan_share_mean"] is None
+        assert pred["conformal_calibrated"] is True
+        assert pred["calibration_coverage"] == pytest.approx(0.80)
 
     def test_predict_with_plan_returns_annual_share(
         self, client: TestClient

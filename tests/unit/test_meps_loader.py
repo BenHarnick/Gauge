@@ -173,6 +173,120 @@ def test_missing_bmi_without_saq_gives_actionable_error(tmp_path) -> None:
         load_meps(path)
 
 
+def test_load_meps_bad_path_raises_value_error(tmp_path) -> None:
+    """A non-existent or unparseable file raises ValueError with context."""
+    bad_path = tmp_path / "nonexistent.dta"
+    with pytest.raises(ValueError, match="Could not read MEPS Stata file"):
+        load_meps(bad_path)
+
+
+def test_load_meps_bad_saq_path_raises_value_error(tmp_path) -> None:
+    """A bad SAQ path raises a ValueError that names the SAQ file."""
+    # Build a valid main file (no BMI column so we need SAQ).
+    main_rows = pd.DataFrame(
+        [
+            {
+                "DUPERSID": "p1",
+                MEPS_AGE: 40,
+                MEPS_SEX: 1,
+                MEPS_REGION: 1,
+                MEPS_SMOKER: 2,
+                MEPS_FAMID: "f1",
+                MEPS_TOTEXP: 5000.0,
+            }
+        ]
+    ).astype(
+        {
+            MEPS_AGE: np.int32,
+            MEPS_SEX: np.int32,
+            MEPS_REGION: np.int32,
+            MEPS_SMOKER: np.int32,
+            MEPS_FAMID: "string",
+            MEPS_TOTEXP: np.float64,
+        }
+    )
+    main_path = tmp_path / "main.dta"
+    main_rows.to_stata(main_path, write_index=False)
+
+    bad_saq = tmp_path / "missing_saq.dta"
+    with pytest.raises(ValueError, match="Could not read MEPS SAQ Stata file"):
+        load_meps(main_path, saq_path=bad_saq)
+
+
+def test_load_meps_saq_missing_dupersid_raises_value_error(tmp_path) -> None:
+    """If either file lacks DUPERSID the merge raises a clear ValueError."""
+    main_rows = pd.DataFrame(
+        [
+            {
+                "DUPERSID": "p1",
+                MEPS_AGE: 40,
+                MEPS_SEX: 1,
+                MEPS_REGION: 1,
+                MEPS_SMOKER: 2,
+                MEPS_FAMID: "f1",
+                MEPS_TOTEXP: 5000.0,
+            }
+        ]
+    ).astype(
+        {
+            MEPS_AGE: np.int32,
+            MEPS_SEX: np.int32,
+            MEPS_REGION: np.int32,
+            MEPS_SMOKER: np.int32,
+            MEPS_FAMID: "string",
+            MEPS_TOTEXP: np.float64,
+        }
+    )
+    # SAQ without DUPERSID.
+    saq_rows = pd.DataFrame([{"ADBMI42": 27.5}]).astype({"ADBMI42": np.float64})
+
+    main_path = tmp_path / "main.dta"
+    saq_path = tmp_path / "saq_no_id.dta"
+    main_rows.to_stata(main_path, write_index=False)
+    saq_rows.to_stata(saq_path, write_index=False)
+
+    with pytest.raises(ValueError, match="DUPERSID"):
+        load_meps(main_path, saq_path=saq_path)
+
+
+def test_load_meps_saq_with_no_bmi_columns_raises_value_error(tmp_path) -> None:
+    """SAQ that contains no recognised BMI column raises a clear ValueError."""
+    main_rows = pd.DataFrame(
+        [
+            {
+                "DUPERSID": "p1",
+                MEPS_AGE: 40,
+                MEPS_SEX: 1,
+                MEPS_REGION: 1,
+                MEPS_SMOKER: 2,
+                MEPS_FAMID: "f1",
+                MEPS_TOTEXP: 5000.0,
+            }
+        ]
+    ).astype(
+        {
+            MEPS_AGE: np.int32,
+            MEPS_SEX: np.int32,
+            MEPS_REGION: np.int32,
+            MEPS_SMOKER: np.int32,
+            MEPS_FAMID: "string",
+            MEPS_TOTEXP: np.float64,
+        }
+    )
+    # SAQ has DUPERSID but no BMI column.
+    saq_rows = pd.DataFrame(
+        [{"DUPERSID": "p1", "UNRELATED_COL": 42.0}]
+    ).astype({"UNRELATED_COL": np.float64})
+
+    main_path = tmp_path / "main.dta"
+    saq_path = tmp_path / "saq_no_bmi.dta"
+    main_rows.to_stata(main_path, write_index=False)
+    saq_rows.to_stata(saq_path, write_index=False)
+
+    with pytest.raises(ValueError, match="no known BMI column"):
+        load_meps(main_path, saq_path=saq_path)
+
+
 def test_saq_merge_supplies_bmi(tmp_path) -> None:
     """An SAQ file with BMI gets merged onto the main file by DUPERSID."""
     main_rows = pd.DataFrame(

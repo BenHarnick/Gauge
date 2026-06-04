@@ -28,18 +28,36 @@ should confirm coverage and costs with their insurer.
 
 ## ML pipeline overview
 
-* **Model:** three scikit-learn `HistGradientBoostingRegressor`s trained
-  with `loss="quantile"` at the 10th, 50th, and 90th percentiles. The
-  median is the point estimate; the 10/90 pair gives an 80% prediction
-  interval. Healthcare cost distributions are heavy-tailed, so intervals
-  are much more honest than a single number.
+* **Model:** four scikit-learn `HistGradientBoostingRegressor`s trained
+  in parallel: three with `loss="quantile"` at the 10th, 50th, and 90th
+  percentiles, plus one with `loss="squared_error"` for the mean. The
+  median is the "typical year" point estimate; the mean is the long-run
+  average (pulled up by the heavy tail). Both are surfaced in every
+  prediction response. Healthcare cost distributions are heavily
+  right-skewed, so showing both is more honest than either alone.
+* **Prediction intervals:** after fitting, the predictor runs
+  Conformal Quantile Regression (CQR) calibration on a held-out 20%
+  split of the training data. CQR computes a nonconformity score per
+  calibration row — how far the true value falls outside the raw
+  10th/90th quantile interval — and finds the finite-sample corrected
+  quantile `q_hat` at level `ceil((n+1)*0.80)/n`. At prediction time,
+  the raw interval is expanded symmetrically by `q_hat`, yielding an
+  interval with a **marginal coverage guarantee of ≥ 80 %** for any data
+  distribution, without assuming normality. Every `CostPrediction`
+  response includes `conformal_calibrated: true` and
+  `calibration_coverage: 0.8` when this guarantee holds.
 * **Features:** age, sex, bmi, children, smoker, region. Categorical
   features are one-hot encoded via a `ColumnTransformer`; numerics pass
   through.
 * **Data:** auto-detects in this order:
-  1. `data/meps_hc233.dta` (MEPS HC 2021, run `python scripts/fetch_meps.py`)
-  2. `data/insurance.csv` (Kaggle insurance dataset)
-  3. Synthetic Kaggle-insurance-shaped dataset, deterministically generated.
+  1. `HEALTH_APP_DATASET_CSV` env var, if set — path to a Kaggle-style CSV.
+  2. `HEALTH_APP_MEPS_DTA` env var, if set — path to a MEPS `.dta` file
+     (optionally paired with `HEALTH_APP_MEPS_SAQ` for BMI).
+  3. `data/meps_hc233.dta` if present (run `python scripts/fetch_meps.py`
+     to download). BMI is merged from `data/meps_hc236.dta` (the SAQ
+     supplement) when that file is also present.
+  4. `data/insurance.csv` (Kaggle insurance dataset).
+  5. Synthetic Kaggle-insurance-shaped dataset, deterministically generated.
 
   Region labels are Census-standard (northeast, midwest, south, west) to
   match MEPS. The Kaggle CSV's cardinal-direction regions are mapped
@@ -100,8 +118,11 @@ extracts plan fields without any manual input:
 
 The session API (`/sessions/...`) is a thin UUID-keyed store that ties
 `PredictionFeatures`, a `Plan`, and a `document_id` together for the
-duration of a guided flow. Sessions are in-memory and are lost on server
-restart (intentional for this prototype).
+duration of a guided flow. Sessions and uploaded documents are persisted
+to a SQLite database at `~/.cache/health_app/health_app.db` by default,
+so they survive a server restart. Override the path with
+`HEALTH_APP_DB_PATH`. Set `HEALTH_APP_NO_PERSIST=1` to use in-memory
+stores instead (useful for testing or ephemeral deployments).
 
 Guided-flow endpoints:
 
@@ -159,6 +180,9 @@ npm run build
 
 ```bash
 # Predict annual charges and annual OOP under a plan
+# The prediction object always includes conformal_calibrated and
+# calibration_coverage (e.g. {"conformal_calibrated": true,
+# "calibration_coverage": 0.8}) confirming the 80% coverage guarantee.
 curl -X POST http://127.0.0.1:8000/predict \
   -H "Content-Type: application/json" \
   -d '{
@@ -255,6 +279,7 @@ src/health_app/
     index.py         TfidfRetrievalIndex (sklearn TF-IDF + cosine)
     llm.py           EchoLLM + pluggable Anthropic/OpenAI clients
     store.py         InMemoryDocumentStore (thread-safe)
+    sqlite_store.py  SqliteDocumentStore (default; survives restarts)
     service.py       Upload + ask orchestration
   plan_extract/
     schemas.py       PlanDraft + FieldExtraction Pydantic models
@@ -262,6 +287,7 @@ src/health_app/
   session/
     models.py        Session, SessionEstimate, request/response schemas
     store.py         InMemorySessionStore (thread-safe, UUID-keyed)
+    sqlite_store.py  SqliteSessionStore (default; survives restarts)
   api.py             Unified FastAPI app factory with CORS; includes
                      all session endpoints (/sessions/...)
   main.py            Module entry point with model load-or-train
@@ -288,10 +314,5 @@ tests/
 * Real LLM backend: install the `anthropic` or `openai` extra and set
   the matching API key to replace `EchoLLM`. Plan extraction quality
   improves significantly with a real model.
-* Persistent session and document store (SQLite + on-disk PDFs) so
-  uploads and sessions survive a restart.
-* Wider, more honest prediction intervals via conformal prediction.
-* Train on real MEPS data instead of the synthetic dataset for a more
-  realistic predictor.
 * Multi-plan comparison in the guided flow so users can compare OOP
   estimates side by side across two or more uploaded plans.
