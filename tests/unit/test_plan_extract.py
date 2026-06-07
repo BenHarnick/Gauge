@@ -11,16 +11,16 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.benefits.models import Plan, ServiceCategory
-from health_app.docchat.index import TfidfRetrievalIndex
-from health_app.docchat.llm import EchoLLM
-from health_app.docchat.schemas import Chunk
-from health_app.plan_extract.extractor import (
+from gauge.benefits.models import Plan, ServiceCategory
+from gauge.docchat.index import TfidfRetrievalIndex
+from gauge.docchat.llm import EchoLLM
+from gauge.docchat.schemas import Chunk
+from gauge.plan_extract.extractor import (
     PlanExtractor,
     _parse_dollars,
     _parse_percent,
 )
-from health_app.plan_extract.schemas import FieldExtraction, PlanDraft
+from gauge.plan_extract.schemas import FieldExtraction, PlanDraft
 
 pytestmark = pytest.mark.unit
 
@@ -183,8 +183,8 @@ class TestPlanExtractorExtract:
 
     def test_echo_llm_produces_draft(self, sample_plan_pdf_bytes: bytes) -> None:
         """EchoLLM always returns text; extraction should complete without error."""
-        from health_app.docchat.chunker import chunk_pages
-        from health_app.docchat.extractor import extract_pages
+        from gauge.docchat.chunker import chunk_pages
+        from gauge.docchat.extractor import extract_pages
 
         pages = extract_pages(sample_plan_pdf_bytes)
         chunks = chunk_pages(pages, "echo-doc")

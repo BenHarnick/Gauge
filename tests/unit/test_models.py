@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from health_app.benefits.models import Member, Plan, Procedure, ServiceCategory
+from gauge.benefits.models import Member, Plan, Procedure, ServiceCategory
 
 pytestmark = pytest.mark.unit
 

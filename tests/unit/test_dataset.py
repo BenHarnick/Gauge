@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.predictor.dataset import (
+from gauge.predictor.dataset import (
     FEATURE_COLUMNS,
     REGIONS,
     TARGET_COLUMN,
@@ -48,7 +48,7 @@ def test_smokers_have_higher_average_charges() -> None:
 def test_load_csv_raises_on_missing_columns(tmp_path) -> None:
     import pandas as pd
 
-    from health_app.predictor.dataset import load_csv
+    from gauge.predictor.dataset import load_csv
 
     bad_csv = tmp_path / "bad.csv"
     pd.DataFrame({"age": [30], "bmi": [25.0]}).to_csv(bad_csv, index=False)
@@ -60,7 +60,7 @@ def test_load_dataset_with_csv_path_returns_dataframe(tmp_path) -> None:
     """load_dataset delegates to load_csv when csv_path is provided."""
     import pandas as pd
 
-    from health_app.predictor.dataset import (
+    from gauge.predictor.dataset import (
         FEATURE_COLUMNS,
         TARGET_COLUMN,
         load_dataset,

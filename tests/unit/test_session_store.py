@@ -1,7 +1,7 @@
 """Unit tests for the session store and session/estimate models.
 
 Covers ``InMemorySessionStore`` (CRUD, concurrency) and the Pydantic schemas
-in ``health_app.session.models`` (validation, defaults, serialisation).
+in ``gauge.session.models`` (validation, defaults, serialisation).
 """
 
 from __future__ import annotations
@@ -11,16 +11,16 @@ from datetime import datetime, timezone
 
 import pytest
 
-from health_app.plan_extract.schemas import PlanDraft
-from health_app.predictor.schemas import PredictionFeatures
-from health_app.session.models import (
+from gauge.plan_extract.schemas import PlanDraft
+from gauge.predictor.schemas import PredictionFeatures
+from gauge.session.models import (
     ConfirmPlanRequest,
     CreateSessionRequest,
     Session,
     SessionEstimate,
 )
-from health_app.session.store import InMemorySessionStore
-from health_app.predictor.model import CostPrediction
+from gauge.session.store import InMemorySessionStore
+from gauge.predictor.model import CostPrediction
 
 pytestmark = pytest.mark.unit
 

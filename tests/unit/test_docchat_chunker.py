@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.docchat.chunker import chunk_pages
+from gauge.docchat.chunker import chunk_pages
 
 pytestmark = pytest.mark.unit
 
@@ -53,7 +53,7 @@ def test_chunker_returns_empty_for_blank_input() -> None:
 def test_chunker_chunks_a_real_extracted_pdf(
     sample_plan_pdf_bytes: bytes,
 ) -> None:
-    from health_app.docchat.extractor import extract_pages
+    from gauge.docchat.extractor import extract_pages
 
     pages = extract_pages(sample_plan_pdf_bytes)
     chunks = chunk_pages(pages, document_id="d", chunk_size=400, overlap=80)

@@ -21,13 +21,13 @@ import io
 import pytest
 from fastapi.testclient import TestClient
 
-from health_app.api import create_app
-from health_app.benefits.repository import InMemoryRepository
-from health_app.docchat.llm import EchoLLM
-from health_app.docchat.service import DocumentChatService
-from health_app.plan_extract.extractor import PlanExtractor
-from health_app.predictor.model import CostPredictor
-from health_app.session.store import InMemorySessionStore
+from gauge.api import create_app
+from gauge.benefits.repository import InMemoryRepository
+from gauge.docchat.llm import EchoLLM
+from gauge.docchat.service import DocumentChatService
+from gauge.plan_extract.extractor import PlanExtractor
+from gauge.predictor.model import CostPredictor
+from gauge.session.store import InMemorySessionStore
 
 pytestmark = pytest.mark.integration
 
@@ -199,7 +199,7 @@ class TestAttachDocument:
         assert resp.status_code == 415
 
     def test_oversized_pdf_returns_413(self, client: TestClient) -> None:
-        from health_app.api import MAX_PDF_BYTES
+        from gauge.api import MAX_PDF_BYTES
 
         sid = _create_session(client)
         oversized = b"%" * (MAX_PDF_BYTES + 1)

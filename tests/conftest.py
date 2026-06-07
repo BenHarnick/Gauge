@@ -9,17 +9,17 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.benefits.models import (
+from gauge.benefits.models import (
     Member,
     Plan,
     Procedure,
     ServiceCategory,
 )
-from health_app.benefits.repository import InMemoryRepository
-from health_app.benefits.seed import build_default_repository
-from health_app.predictor.dataset import generate_synthetic_dataset
-from health_app.predictor.model import CostPredictor
-from health_app.predictor.schemas import PredictionFeatures
+from gauge.benefits.repository import InMemoryRepository
+from gauge.benefits.seed import build_default_repository
+from gauge.predictor.dataset import generate_synthetic_dataset
+from gauge.predictor.model import CostPredictor
+from gauge.predictor.schemas import PredictionFeatures
 
 
 # --- benefits fixtures ---------------------------------------------------

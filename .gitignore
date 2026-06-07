@@ -9,6 +9,7 @@ dist/
 venv/
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 
 # Data files (re-downloadable via scripts/fetch_meps.py, etc.)
@@ -20,6 +21,7 @@ data/
 
 # Frontend (also has a local .gitignore inside frontend/)
 node_modules/
+frontend/dist/
 
 # Editor / OS
 .DS_Store

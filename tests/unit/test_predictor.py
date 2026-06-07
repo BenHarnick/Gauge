@@ -6,12 +6,12 @@ import pytest
 
 import numpy as np
 
-from health_app.predictor.dataset import generate_synthetic_dataset
-from health_app.predictor.model import (
+from gauge.predictor.dataset import generate_synthetic_dataset
+from gauge.predictor.model import (
     ALL_FEATURES,
     CostPredictor,
 )
-from health_app.predictor.schemas import PredictionFeatures
+from gauge.predictor.schemas import PredictionFeatures
 
 pytestmark = pytest.mark.unit
 
@@ -159,7 +159,7 @@ def test_conformal_interval_wider_than_raw_quantile() -> None:
     calibration by inspecting q_hat).  If the data is typical, q_hat > 0
     and the calibrated interval is strictly wider.
     """
-    from health_app.predictor.dataset import generate_synthetic_dataset
+    from gauge.predictor.dataset import generate_synthetic_dataset
 
     df = generate_synthetic_dataset(n_rows=600, seed=99)
     features = PredictionFeatures(
@@ -189,7 +189,7 @@ def test_conformal_interval_wider_than_raw_quantile() -> None:
 
 def test_conformal_coverage_holds_on_held_out_data() -> None:
     """Empirical coverage on a fresh test set should meet the target."""
-    from health_app.predictor.dataset import generate_synthetic_dataset
+    from gauge.predictor.dataset import generate_synthetic_dataset
 
     rng = np.random.default_rng(7)
     df_all = generate_synthetic_dataset(n_rows=2000, seed=7)

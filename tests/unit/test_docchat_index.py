@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.docchat.index import TfidfRetrievalIndex
-from health_app.docchat.schemas import Chunk
+from gauge.docchat.index import TfidfRetrievalIndex
+from gauge.docchat.schemas import Chunk
 
 pytestmark = pytest.mark.unit
 

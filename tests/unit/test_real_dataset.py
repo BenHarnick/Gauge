@@ -11,9 +11,9 @@ from pathlib import Path
 
 import pytest
 
-from health_app.predictor.dataset import FEATURE_COLUMNS, TARGET_COLUMN, load_csv
-from health_app.predictor.model import CostPredictor
-from health_app.predictor.schemas import PredictionFeatures
+from gauge.predictor.dataset import FEATURE_COLUMNS, TARGET_COLUMN, load_csv
+from gauge.predictor.model import CostPredictor
+from gauge.predictor.schemas import PredictionFeatures
 
 pytestmark = pytest.mark.unit
 

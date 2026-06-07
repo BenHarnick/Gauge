@@ -48,10 +48,10 @@ COPY data/ ./data/
 COPY --from=frontend-builder /frontend/dist ./frontend/dist
 
 # Persistent data lives on a volume so it survives container restarts:
-#   /data/health_app.db  — SQLite database (sessions + documents)
+#   /data/gauge.db  — SQLite database (sessions + documents)
 #   /data/cache/         — trained model cache (.joblib)
-ENV HEALTH_APP_DB_PATH=/data/health_app.db
-ENV HEALTH_APP_CACHE_DIR=/data/cache
+ENV GAUGE_DB_PATH=/data/gauge.db
+ENV GAUGE_CACHE_DIR=/data/cache
 
 RUN mkdir -p /data && chown appuser:appuser /data
 VOLUME ["/data"]
@@ -62,7 +62,7 @@ EXPOSE 8000
 
 # Serve with a single worker; the in-process SQLite store is not safe
 # across multiple worker processes. Use --workers 1 explicitly.
-CMD ["uvicorn", "health_app.main:app", \
+CMD ["uvicorn", "gauge.main:app", \
      "--host", "0.0.0.0", \
      "--port", "8000", \
      "--workers", "1"]

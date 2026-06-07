@@ -2,3 +2,7 @@ node_modules
 dist
 .vite
 *.log
+
+# Compiled TypeScript output — never commit, always use .tsx/.ts sources
+src/**/*.js
+*.tsbuildinfo

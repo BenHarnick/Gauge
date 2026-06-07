@@ -10,9 +10,9 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from health_app.api import create_app
-from health_app.predictor.model import CostPredictor
-from health_app.benefits.repository import InMemoryRepository
+from gauge.api import create_app
+from gauge.predictor.model import CostPredictor
+from gauge.benefits.repository import InMemoryRepository
 
 pytestmark = pytest.mark.integration
 
@@ -122,8 +122,8 @@ class TestEstimateEndpoint:
         trained_predictor: CostPredictor,
     ) -> None:
         """Member exists but references a plan_id that isn't in the repo -> 404."""
-        from health_app.benefits.models import Member
-        from health_app.benefits.repository import InMemoryRepository
+        from gauge.benefits.models import Member
+        from gauge.benefits.repository import InMemoryRepository
 
         member = Member(member_id="m_orphan", name="Orphan", plan_id="nonexistent_plan")
         repo = InMemoryRepository(plans=[], members=[member], procedures=[])
@@ -142,8 +142,8 @@ class TestEstimateEndpoint:
 
 def test_create_app_with_unfitted_predictor_raises() -> None:
     """create_app must reject a predictor that hasn't been fitted yet."""
-    from health_app.api import create_app
-    from health_app.benefits.seed import build_default_repository
+    from gauge.api import create_app
+    from gauge.benefits.seed import build_default_repository
 
     unfitted = CostPredictor()
     with pytest.raises(ValueError, match="fitted"):

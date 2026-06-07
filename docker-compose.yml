@@ -5,7 +5,7 @@ services:
       - "8000:8000"
     volumes:
       # Persists the SQLite database and trained model cache across restarts.
-      - health_app_data:/data
+      - gauge_data:/data
     environment:
       # Pass through an Anthropic or OpenAI key for real LLM-powered
       # plan extraction and document Q&A. Without a key the app falls back
@@ -15,5 +15,5 @@ services:
     restart: unless-stopped
 
 volumes:
-  health_app_data:
+  gauge_data:
     driver: local

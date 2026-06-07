@@ -22,13 +22,13 @@ import io
 import pytest
 from fastapi.testclient import TestClient
 
-from health_app.api import create_app
-from health_app.benefits.seed import build_default_repository
-from health_app.docchat.llm import EchoLLM
-from health_app.docchat.service import DocumentChatService
-from health_app.plan_extract.extractor import PlanExtractor
-from health_app.predictor.model import CostPredictor
-from health_app.session.store import InMemorySessionStore
+from gauge.api import create_app
+from gauge.benefits.seed import build_default_repository
+from gauge.docchat.llm import EchoLLM
+from gauge.docchat.service import DocumentChatService
+from gauge.plan_extract.extractor import PlanExtractor
+from gauge.predictor.model import CostPredictor
+from gauge.session.store import InMemorySessionStore
 
 pytestmark = pytest.mark.e2e
 

@@ -7,8 +7,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from health_app.docchat.llm import AnthropicLLM, EchoLLM, OpenAILLM, auto_select_llm
-from health_app.docchat.schemas import Chunk
+from gauge.docchat.llm import AnthropicLLM, EchoLLM, OpenAILLM, auto_select_llm
+from gauge.docchat.schemas import Chunk
 
 pytestmark = pytest.mark.unit
 

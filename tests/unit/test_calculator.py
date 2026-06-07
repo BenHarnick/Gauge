@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.benefits.calculator import estimate_cost_share
-from health_app.benefits.models import Member, Plan, Procedure, ServiceCategory
+from gauge.benefits.calculator import estimate_cost_share
+from gauge.benefits.models import Member, Plan, Procedure, ServiceCategory
 
 pytestmark = pytest.mark.unit
 

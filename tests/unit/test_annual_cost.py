@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.benefits.models import Plan
-from health_app.predictor.annual_cost import apply_plan_to_annual_spend
+from gauge.benefits.models import Plan
+from gauge.predictor.annual_cost import apply_plan_to_annual_spend
 
 pytestmark = pytest.mark.unit
 

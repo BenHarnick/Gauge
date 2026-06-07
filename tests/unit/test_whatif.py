@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.benefits.models import Plan
-from health_app.predictor.model import CostPredictor
-from health_app.predictor.schemas import PredictionFeatures
-from health_app.predictor.whatif import sweep
+from gauge.benefits.models import Plan
+from gauge.predictor.model import CostPredictor
+from gauge.predictor.schemas import PredictionFeatures
+from gauge.predictor.whatif import sweep
 
 pytestmark = pytest.mark.unit
 

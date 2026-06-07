@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.docchat.extractor import extract_pages
+from gauge.docchat.extractor import extract_pages
 
 pytestmark = pytest.mark.unit
 
@@ -40,7 +40,7 @@ def test_malformed_page_returns_empty_string(
     mock_reader = MagicMock()
     mock_reader.pages = [bad_page, good_page]
 
-    with patch("health_app.docchat.extractor.PdfReader", return_value=mock_reader):
+    with patch("gauge.docchat.extractor.PdfReader", return_value=mock_reader):
         pages = extract_pages(b"irrelevant-bytes")
 
     assert pages == [(1, ""), (2, "deductible is $1,000")]

@@ -14,12 +14,12 @@ from pathlib import Path
 
 import pytest
 
-from health_app.docchat.schemas import Chunk, DocumentMeta
-from health_app.docchat.sqlite_store import SqliteDocumentStore
-from health_app.docchat.index import TfidfRetrievalIndex
-from health_app.predictor.schemas import PredictionFeatures
-from health_app.session.models import Session
-from health_app.session.sqlite_store import SqliteSessionStore
+from gauge.docchat.schemas import Chunk, DocumentMeta
+from gauge.docchat.sqlite_store import SqliteDocumentStore
+from gauge.docchat.index import TfidfRetrievalIndex
+from gauge.predictor.schemas import PredictionFeatures
+from gauge.session.models import Session
+from gauge.session.sqlite_store import SqliteSessionStore
 
 pytestmark = pytest.mark.unit
 

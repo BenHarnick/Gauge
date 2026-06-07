@@ -5,10 +5,10 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from health_app.api import create_app
-from health_app.benefits.seed import build_default_repository
-from health_app.docchat.service import DocumentChatService
-from health_app.predictor.model import CostPredictor
+from gauge.api import create_app
+from gauge.benefits.seed import build_default_repository
+from gauge.docchat.service import DocumentChatService
+from gauge.predictor.model import CostPredictor
 
 pytestmark = pytest.mark.e2e
 

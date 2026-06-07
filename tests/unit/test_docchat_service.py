@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from health_app.docchat.service import DocumentChatService
+from gauge.docchat.service import DocumentChatService
 
 pytestmark = pytest.mark.unit
 

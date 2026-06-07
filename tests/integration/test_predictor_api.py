@@ -5,9 +5,9 @@ from __future__ import annotations
 import pytest
 from fastapi.testclient import TestClient
 
-from health_app.api import create_app
-from health_app.benefits.repository import InMemoryRepository
-from health_app.predictor.model import CostPredictor
+from gauge.api import create_app
+from gauge.benefits.repository import InMemoryRepository
+from gauge.predictor.model import CostPredictor
 
 pytestmark = pytest.mark.integration
 

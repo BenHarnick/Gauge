@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from health_app.predictor.meps import (
+from gauge.predictor.meps import (
     MEPS_AGE,
     MEPS_BMI,
     MEPS_FAMID,
