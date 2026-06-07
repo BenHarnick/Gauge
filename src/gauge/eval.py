@@ -31,6 +31,7 @@ import matplotlib.patches
 import matplotlib.pyplot as plt
 import matplotlib.ticker
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -128,7 +129,7 @@ def resolve_data() -> tuple[pd.DataFrame, str]:
 # ---------------------------------------------------------------------------
 
 
-def cqr_q_hat(scores: np.ndarray, coverage: float) -> float:
+def cqr_q_hat(scores: npt.NDArray[Any], coverage: float) -> float:
     """Finite-sample corrected CQR quantile of nonconformity scores.
 
     Implements the correction from Romano, Patterson & Candès (2019):
@@ -136,7 +137,7 @@ def cqr_q_hat(scores: np.ndarray, coverage: float) -> float:
 
     Parameters
     ----------
-    scores : np.ndarray
+    scores : npt.NDArray[Any]
         CQR nonconformity scores on the calibration set.
     coverage : float
         Nominal marginal coverage target, e.g. 0.80.
@@ -153,14 +154,14 @@ def cqr_q_hat(scores: np.ndarray, coverage: float) -> float:
     return float(np.quantile(scores, level))
 
 
-def empirical_coverage(y: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> float:
+def empirical_coverage(y: npt.NDArray[Any], lo: npt.NDArray[Any], hi: npt.NDArray[Any]) -> float:
     """Fraction of test points inside ``[lo, hi]``.
 
     Parameters
     ----------
-    y : np.ndarray
+    y : npt.NDArray[Any]
         True target values.
-    lo, hi : np.ndarray
+    lo, hi : npt.NDArray[Any]
         Lower and upper interval endpoints.
 
     Returns
@@ -171,12 +172,12 @@ def empirical_coverage(y: np.ndarray, lo: np.ndarray, hi: np.ndarray) -> float:
     return float(np.mean((y >= lo) & (y <= hi)))
 
 
-def mean_width(lo: np.ndarray, hi: np.ndarray) -> float:
+def mean_width(lo: npt.NDArray[Any], hi: npt.NDArray[Any]) -> float:
     """Mean interval width in dollars.
 
     Parameters
     ----------
-    lo, hi : np.ndarray
+    lo, hi : npt.NDArray[Any]
         Lower and upper endpoints (dollars).
 
     Returns
@@ -187,7 +188,7 @@ def mean_width(lo: np.ndarray, hi: np.ndarray) -> float:
     return float(np.mean(hi - lo))
 
 
-def pinball_loss(y: np.ndarray, q_pred: np.ndarray, quantile: float) -> float:
+def pinball_loss(y: npt.NDArray[Any], q_pred: npt.NDArray[Any], quantile: float) -> float:
     """Quantile (pinball) loss — the proper scoring rule for quantile forecasts.
 
     A lower value is better.  Lead with this metric when comparing interval
@@ -195,9 +196,9 @@ def pinball_loss(y: np.ndarray, q_pred: np.ndarray, quantile: float) -> float:
 
     Parameters
     ----------
-    y : np.ndarray
+    y : npt.NDArray[Any]
         True target values.
-    q_pred : np.ndarray
+    q_pred : npt.NDArray[Any]
         Predicted quantile at level ``quantile``.
     quantile : float
         Target quantile in ``(0, 1)``.
@@ -211,12 +212,12 @@ def pinball_loss(y: np.ndarray, q_pred: np.ndarray, quantile: float) -> float:
     return float(np.mean(np.where(err >= 0, quantile * err, (quantile - 1) * err)))
 
 
-def mae_metric(y: np.ndarray, y_pred: np.ndarray) -> float:
+def mae_metric(y: npt.NDArray[Any], y_pred: npt.NDArray[Any]) -> float:
     """Mean absolute error."""
     return float(np.mean(np.abs(y - y_pred)))
 
 
-def rmse_metric(y: np.ndarray, y_pred: np.ndarray) -> float:
+def rmse_metric(y: npt.NDArray[Any], y_pred: npt.NDArray[Any]) -> float:
     """Root mean squared error."""
     return float(np.sqrt(np.mean((y - y_pred) ** 2)))
 
@@ -231,7 +232,7 @@ def three_way_split(
     seed: int,
     train_frac: float = 0.60,
     cal_frac: float = 0.20,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
     """Shuffle and split ``df`` into train / calibration / test sets.
 
     Parameters
@@ -295,11 +296,11 @@ class QuantileModel:
     q_lo: Pipeline
     q_med: Pipeline
     q_hi: Pipeline
-    cal_scores: np.ndarray
+    cal_scores: npt.NDArray[Any]
 
     def predict_cqr(
         self, X: pd.DataFrame, coverage: float = 0.80
-    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
         """Predict with CQR-adjusted interval at the given nominal coverage.
 
         Parameters
@@ -311,7 +312,7 @@ class QuantileModel:
 
         Returns
         -------
-        tuple[np.ndarray, np.ndarray, np.ndarray]
+        tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]
             ``(lower, median, upper)`` all clamped at zero.
         """
         q = cqr_q_hat(self.cal_scores, coverage)
@@ -320,7 +321,7 @@ class QuantileModel:
         hi = np.maximum(0.0, self.q_hi.predict(X) + q)
         return lo, med, hi
 
-    def predict_raw(self, X: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def predict_raw(self, X: pd.DataFrame) -> tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
         """Predict with the un-conformalized (raw) quantile interval.
 
         Parameters
@@ -330,7 +331,7 @@ class QuantileModel:
 
         Returns
         -------
-        tuple[np.ndarray, np.ndarray, np.ndarray]
+        tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]
             ``(lower, median, upper)`` clamped at zero, no CQR adjustment.
         """
         lo = np.maximum(0.0, self.q_lo.predict(X))
@@ -381,9 +382,9 @@ def _build_pipeline_for_features(quantile: float | None, cols: list[str]) -> Pip
 
 def train_quantile_model(
     X_train: pd.DataFrame,
-    y_train: np.ndarray,
+    y_train: npt.NDArray[Any],
     X_cal: pd.DataFrame,
-    y_cal: np.ndarray,
+    y_cal: npt.NDArray[Any],
 ) -> QuantileModel:
     """Fit the three GBM quantile pipelines and compute CQR nonconformity scores.
 
@@ -391,7 +392,7 @@ def train_quantile_model(
     ----------
     X_train, X_cal : pd.DataFrame
         Feature matrices for training and calibration sets.
-    y_train, y_cal : np.ndarray
+    y_train, y_cal : npt.NDArray[Any]
         Target arrays (annual charges in dollars).
 
     Returns
@@ -431,8 +432,8 @@ def _preprocessor() -> ColumnTransformer:
 
 
 def _baseline_global_mean(
-    y_train: np.ndarray, n_test: int
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    y_train: npt.NDArray[Any], n_test: int
+) -> tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
     mean = float(y_train.mean())
     lo = float(np.quantile(y_train, 0.10))
     hi = float(np.quantile(y_train, 0.90))
@@ -441,9 +442,9 @@ def _baseline_global_mean(
 
 def _baseline_linear(
     X_train: pd.DataFrame,
-    y_train: np.ndarray,
+    y_train: npt.NDArray[Any],
     X_test: pd.DataFrame,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
     pipe = Pipeline([("pre", _preprocessor()), ("reg", LinearRegression())])
     pipe.fit(X_train, y_train)
     y_pred = np.maximum(0.0, pipe.predict(X_test))
@@ -456,9 +457,9 @@ def _baseline_linear(
 
 def _baseline_gbm_gaussian(
     X_train: pd.DataFrame,
-    y_train: np.ndarray,
+    y_train: npt.NDArray[Any],
     X_test: pd.DataFrame,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[npt.NDArray[Any], npt.NDArray[Any], npt.NDArray[Any]]:
     """GBM point estimate (squared-error) with Gaussian interval from training residuals."""
     pipe = _build_mean_pipeline()
     pipe.fit(X_train, y_train)
@@ -490,14 +491,14 @@ SUBGROUPS: list[str] = [
 ]
 
 
-def _subgroup_mask(df: pd.DataFrame, label: str) -> np.ndarray:
+def _subgroup_mask(df: pd.DataFrame, label: str) -> npt.NDArray[Any]:
     """Boolean mask selecting the named demographic subgroup from ``df``."""
     age = df["age"].to_numpy()
     bmi = df["bmi"].to_numpy()
     sm = df["smoker"].to_numpy()
     reg = df["region"].to_numpy()
 
-    mapping: dict[str, np.ndarray] = {
+    mapping: dict[str, npt.NDArray[Any]] = {
         "Smoker": sm == "yes",
         "Non-smoker": sm == "no",
         "Age < 35": age < 35,
@@ -537,10 +538,10 @@ class SeedResult:
     # Ablations: name → metric → value
     ablations: dict[str, dict[str, float]] = field(default_factory=dict)
     # Raw predictions for scatter plot (populated for seed 0 only)
-    y_test: np.ndarray | None = None
-    y_pred_med: np.ndarray | None = None
-    y_pred_lo: np.ndarray | None = None
-    y_pred_hi: np.ndarray | None = None
+    y_test: npt.NDArray[Any] | None = None
+    y_pred_med: npt.NDArray[Any] | None = None
+    y_pred_lo: npt.NDArray[Any] | None = None
+    y_pred_hi: npt.NDArray[Any] | None = None
 
 
 def evaluate_seed(df: pd.DataFrame, seed: int, store_preds: bool = False) -> SeedResult:
@@ -590,7 +591,7 @@ def evaluate_seed(df: pd.DataFrame, seed: int, store_preds: bool = False) -> See
             result.subgroup_cov[sg] = empirical_coverage(y_test[mask], lo_80[mask], hi_80[mask])
 
     # §2.3.2 — benchmark
-    def _bm(name: str, lo: np.ndarray, y_pt: np.ndarray, hi: np.ndarray) -> None:
+    def _bm(name: str, lo: npt.NDArray[Any], y_pt: npt.NDArray[Any], hi: npt.NDArray[Any]) -> None:
         result.benchmarks[name] = {
             "mae": mae_metric(y_test, y_pt),
             "rmse": rmse_metric(y_test, y_pt),
