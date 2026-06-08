@@ -53,37 +53,13 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. The default view is the guided flow: enter demographics, upload your plan PDF, review extracted fields, and get your personalised OOP interval. The "Explore costs" and "Ask your plan" tabs give direct access to the predictor and document chat modules.
+Open `http://localhost:5173`. Enter your demographics, upload your plan PDF, review the extracted fields, and get your personalised OOP interval. The what-if simulator and plan Q&A panel appear inline below the result — no separate tabs.
 
 The frontend talks to the backend at `http://localhost:8000`. Override with `VITE_API_BASE` at build time.
 
 ### API examples
 
 ```bash
-# Predict charges + OOP interval under a plan
-curl -X POST http://localhost:8000/predict \
-  -H "Content-Type: application/json" \
-  -d '{
-    "features": {
-      "age": 40, "sex": "male", "bmi": 32.0,
-      "children": 2, "smoker": "yes", "region": "south"
-    },
-    "plan_id": "ppo_gold"
-  }'
-
-# What-if: sweep age from 25 to 64 and track OOP under PPO Gold
-curl -X POST http://localhost:8000/whatif \
-  -H "Content-Type: application/json" \
-  -d '{
-    "baseline": {
-      "age": 40, "sex": "male", "bmi": 27.0,
-      "children": 0, "smoker": "no", "region": "northeast"
-    },
-    "feature": "age",
-    "values": [25, 35, 45, 55, 64],
-    "plan_id": "ppo_gold"
-  }'
-
 # Guided session flow
 SESSION=$(curl -sX POST http://localhost:8000/sessions \
   -H "Content-Type: application/json" \
@@ -202,12 +178,15 @@ src/gauge/
   eval.py            Evaluation script: coverage, MAE, ablations, figures
 frontend/
   src/
-    App.tsx          Top-level tabs + Gauge branding
-    api.ts           Typed client for the backend (session + predictor + chat)
+    App.tsx          Brand header + IntakeWizard (single flow, no tabs)
+    api.ts           Typed client for the session-based backend API
     components/
-      IntakeWizard.tsx  4-step guided flow → OOP interval hero
-      PredictorPage/    Standalone predictor + what-if chart with OOP band
-      DocChatPage/      PDF upload + chat panel
+      IntakeWizard.tsx  4-step flow: demographics → PDF upload → confirm → estimate
+                        Step 4 includes what-if chart and plan Q&A inline
+      WhatIfChart.tsx   Recharts component rendering the OOP sweep
+      Select.tsx        Generic select input
+      Slider.tsx        Range slider with formatted label
+      Toggle.tsx        Binary toggle (sex, smoker)
 tests/
   unit/              Logic tests: models, calculator, predictor, OOP interval
   integration/       Endpoint tests via FastAPI TestClient
