@@ -54,7 +54,6 @@ ENV GAUGE_DB_PATH=/data/gauge.db
 ENV GAUGE_CACHE_DIR=/data/cache
 
 RUN mkdir -p /data && chown appuser:appuser /data
-VOLUME ["/data"]
 
 USER appuser
 
