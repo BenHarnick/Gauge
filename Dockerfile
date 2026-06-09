@@ -30,6 +30,7 @@ WORKDIR /app
 # Install system dependencies needed by scipy/sklearn at runtime.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libgomp1 \
+        gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python package and its Anthropic extra so a real LLM is
@@ -53,15 +54,11 @@ COPY --from=frontend-builder /frontend/dist ./frontend/dist
 ENV GAUGE_DB_PATH=/data/gauge.db
 ENV GAUGE_CACHE_DIR=/data/cache
 
-RUN mkdir -p /data && chown appuser:appuser /data
-
-USER appuser
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 EXPOSE 8000
 
-# Serve with a single worker; the in-process SQLite store is not safe
-# across multiple worker processes. Use --workers 1 explicitly.
-CMD ["uvicorn", "gauge.main:app", \
-     "--host", "0.0.0.0", \
-     "--port", "8000", \
-     "--workers", "1"]
+# entrypoint.sh runs as root, fixes /data ownership after the volume
+# mounts, then execs uvicorn as appuser via gosu.
+ENTRYPOINT ["/entrypoint.sh"]
