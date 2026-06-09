@@ -18,9 +18,9 @@ export default function Blog() {
         <h1 className="text-4xl font-bold leading-tight text-slate-900">
           How Gauge works
         </h1>
-        <p className="mt-4 text-lg leading-relaxed text-slate-600">
+        {/* <p className="mt-4 text-lg leading-relaxed text-slate-600">
           A data based cost estimator so that uncertainty is never expected.
-        </p>
+        </p> */}
       </header>
 
       {/* ------------------------------------------------------------------ */}
@@ -35,15 +35,15 @@ export default function Blog() {
           the premium, but the premium is only part of what you actually pay.
           Deductibles, coinsurance, copays, and the out-of-pocket maximum
           interact in ways that are hard to reason about without plugging in
-          real numbers. The documents are also so dense and complicated that it is hard
-          to find the information that you need.
+          real numbers. The documents are so dense and complicated that it is hard
+          to find the information that you need. Which is why I decided to include an AI chatbot to help dig through the information.
         </p>
         <p className="mb-4 leading-relaxed">
-          Most cost estimators give you a single number — "you'll spend about
-          $4,200 this year" — with no indication of how confident they are.
+          Most cost estimators give you a single number ("you'll spend about
+          $4,200 this year") with no indication of how confident they are.
           That bothers me. Healthcare costs have a heavy right tail. A "typical"
           year and a "bad" year look very different, and a tool that collapses
-          that into one figure is hiding something important.
+          that into one figure is hiding something important. With such big cost differences it is important for the user to be aware of the uncertainty.
         </p>
         <p className="leading-relaxed">
           Gauge predicts a range, not a point, and the range has a formal
@@ -74,31 +74,30 @@ export default function Blog() {
             <span className="font-semibold text-slate-800">Frontend (React + Vite + Tailwind).</span>{" "}
             A four-step program asks you to input demographics, upload a PDF,
             review the plan fields, and view your final estimate. The what-if chart
-            lets you sweep any input and see how the prediction changes. The chatbot is there
+            lets you choose any input and see how the prediction changes with different values for it. The chatbot is there
             to answer any questions about the plan that was uploaded.
           </p>
           <p>
             <span className="font-semibold text-slate-800">FastAPI backend.</span>{" "}
             Sessions are created on step one and carry state through the flow.
-            The plan extractor uses an LLM (Anthropic Claude with an
-            echo stub for tests) to pull structured fields out of the uploaded PDF.
-            RAG-based chat lets you ask Natural Language questions against that
+            The plan extractor uses an LLM (Anthropic Claude) to pull structured fields out of the uploaded PDF.
+            RAG-based chat lets you ask natural language questions about that
             same document.
           </p>
           <p>
             <span className="font-semibold text-slate-800">SQLite persistence.</span>{" "}
             Sessions, uploaded document chunks, and saved estimates all live in
-            a single WAL-mode SQLite database. Nested Pydantic models are stored
-            as JSON blobs — keeps the schema flat and makes the stores easy to
+            a single SQLite database. Nested Pydantic models are stored
+            as JSON, which keeps the schema flat and makes the stores easy to
             test.
           </p>
-          <p>
+          {/* <p>
             <span className="font-semibold text-slate-800">Anonymous identity.</span>{" "}
             The browser generates a UUID on first visit and sends it as
             an <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">X-Gauge-User-Id</code> header
             on every request. No login required, but estimates are scoped to
             your browser.
-          </p>
+          </p> */}
         </div>
       </section>
 
@@ -121,28 +120,26 @@ export default function Blog() {
           </a>
           , a nationally representative survey of American families that
           records actual out-of-pocket and total medical spending. It's the
-          best public data source for this kind of model — real insurance
-          claims, not simulated figures.
+          best public data source that I could find which would ensure that my data and therefore the effects of the project would have real standing.
         </p>
         <p className="mb-6 leading-relaxed">
-          The MEPS data doesn't come clean. Variable names change between
+          The MEPS data didn't come clean. Variable names change between
           survey years (AGE21X in 2021 → AGE22X in 2022) and  BMI lives in a
-          separate Self-Administered Questionnaire file. The loader handles all of that
-          with a priority-ordered candidate list for each role and an optional
-          SAQ merge on the shared respondent ID.
+          separate "Self-Administered Questionnaire" file. So not only did I have 
+          to combine the seperate files but also be prepared for missing BMI as people may or may not have filled out the optional questionnaires.
         </p>
 
         <DataPipelineDiagram />
 
-        <p className="mt-6 leading-relaxed">
+        {/* <p className="mt-6 leading-relaxed">
           When the MEPS file isn't present, the app falls back to the Kaggle
           insurance dataset, and if that's also missing, it generates a
           deterministic synthetic dataset so there's always something to train
           on. The dataset source is hashed into the model cache filename, so
           swapping inputs forces a clean retrain instead of silently reusing
-          the old model. Healthcare costdistributions are heavily right-skewed 
+          the old model. Healthcare cost distributions are heavily right-skewed 
           the log transform makes the gradient boosting work much better in the tail.
-        </p>
+        </p> */}
       </section>
 
       {/* ------------------------------------------------------------------ */}
@@ -153,40 +150,38 @@ export default function Blog() {
           How the prediction interval actually works
         </h2>
         <p className="mb-4 leading-relaxed">
-          The model is four separate gradient-boosted regressors trained on the
-          same features. Three of them are quantile regressors — they learn to
-          predict the 10th, 50th, and 90th percentiles of the cost
-          distribution. The fourth minimises squared error and predicts the
-          mean. Showing both median and mean matters: healthcare costs are
-          right-skewed, so in a bad year the mean is significantly above the
-          median.
+          I decided to use 4 different regressors in this project to give the user
+          as much detail as possible. The 50th percentile and mean regressors are
+          used to give the user a real number to work off of. The mean and the median
+          give the user a good estimate. They need both because people in general have
+          lower costs most years, but the mean will show the effect of the sometimes 
+          catastrophically higher years that could be possible (the median won't show this).
         </p>
         <p className="mb-4 leading-relaxed">
-          The problem with raw quantile intervals is that they're not
-          calibrated. A model trained to predict the 10th and 90th percentiles
-          doesn't necessarily cover 80% of held-out data — it could be too
-          narrow or too wide, and there's no guarantee it gets better as the
-          dataset grows.
+          The other two models I used predict the 10th and 90th percentile. This would
+          theoretically give the user a good range at 80% confidence what they could expect to pay.
+          The problem with this is that that range may not cover 80% of the data. Conformal Quantile Regression (CQR)
+          will calculate on average how much does the interval need to be expanded to cover the full 80%. 
         </p>
         <p className="mb-6 leading-relaxed">
-          Conformal Quantile Regression (CQR) fixes this. Here's the procedure:
+          Here's the procedure for the CQR:
         </p>
 
         <CQRDiagram />
 
         <ol className="mt-6 space-y-3 pl-5 text-sm leading-relaxed text-slate-600 list-decimal">
           <li>
-            Hold out 20% of the data before training. The model never sees
+            20% of the data is held out before training. The model never sees
             these rows during fitting.
           </li>
           <li>
-            On the held-out set, compute a <em>nonconformity score</em> for
+            On the set that was left out, I compute a <em>nonconformity score</em> for
             each row:{" "}
             <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
               score = max(q_lo(x) − y, y − q_hi(x))
             </code>
             . If the true value was already inside the raw interval, the score
-            is negative. If it fell outside, the score is positive and records
+            is negative (this is ideal). If it fell outside, the score is positive and records
             by how much.
           </li>
           <li>
@@ -195,16 +190,16 @@ export default function Blog() {
               ⌈(n+1)·(1−α)⌉ / n
             </code>
             . Call it <em>q̂</em>. The small finite-sample correction ensures
-            the guarantee holds even on small calibration sets.
+            the guarantee holds even on small sets.
           </li>
           <li>
-            At prediction time, expand the raw interval symmetrically:{" "}
+            When predicting the raw interval is expanded by <em>q̂</em>:{" "}
             <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
               [q_lo(x) − q̂, q_hi(x) + q̂]
             </code>
             . This is the conformal interval, and it's guaranteed to cover the
-            true cost at least 80% of the time for any data distribution —
-            no normality assumption, no parametric model.
+            true cost at least 80% of the time for any data distribution,
+            with no normality assumption and no parametric model.
           </li>
         </ol>
 
@@ -214,18 +209,42 @@ export default function Blog() {
         <p className="mb-4 leading-relaxed">
           Once I have a conformal interval on total charges, I need to convert
           it into an out-of-pocket interval under the user's actual plan. The
-          plan's cost-share function — deductible, then coinsurance, capped at
-          the OOP max — is monotone: higher charges never produce lower
-          member cost.
+          way that these plans work is by continuously going up until they reach the Out of Pocket Maximum (OOP max).
+          This allows me to simply apply the charge interval with the ordering preserved. If the deductible is hit then the upper bound starts
+          to collapse towards the OOP max.
         </p>
-        <p className="leading-relaxed">
-          Because the function is monotone, I can just apply it to the lower
-          bound, median, and upper bound of the charge interval and the
-          ordering is preserved. The resulting OOP interval inherits the same
-          80% coverage guarantee, with no simulation required. If you've hit
-          your deductible and are approaching the OOP max, the upper bound
-          collapses toward the cap — the interval correctly narrows.
+      </section>
+      <section className="mb-16">
+        <h2 className="mb-4 text-2xl font-semibold text-slate-900">
+          Conclusion
+        </h2>
+        <p className="mb-4 leading-relaxed">
+          This project gave me perspective into the intense processes that 
+          go into a project life cycle. When I first came up with this idea
+          it was going to be a simple project which given some demographics could
+          estimate the costs with health insurance and then also read the plan document in order
+          to explain and dissect the complicated information. This was too clunky and felt more like
+          a collection of tools rather than the experience I had envisioned. After many iterations 
+          I now have a fully working program which from the moment you enter the site has a flow
+          with steps that make sense and are crucial to the best application of the idea. 
         </p>
+
+        <p className="mb-4 leading-relaxed">
+          There were many problems that came up during this project. I was originally using a Kaggle
+          dataset, but I decided that that simply wasn't good enough if I wanted to create an application
+          with real meaning. Integrating the MEPS data, while worthwhile, was time consuming and frustrating
+          as all of the files were different and needed to be adjusted in order for the merge to work.
+          A real breakthrough I had was with the CQR because this gave the numbers a real use in ways that
+          a single number just wouldn't do.
+        </p>
+
+        <p className="mb-4 leading-relaxed">
+          There is still room for improvement here as there are several limitations that need to be addressed.
+          The MEPS data, while significant, was not very large, so there is definite room for improvement when
+          it comes to training the model. The model does not even touch upon already diagnosed illnesses. 
+          Chronic illnesses can have a massive effect on healthcare costs.
+        </p>
+
       </section>
 
       {/* ------------------------------------------------------------------ */}
@@ -274,11 +293,8 @@ function ArchDiagram() {
       >
         {/* ── colour palette ───────────────────────────────────────────── */}
         <defs>
-          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto-start-reverse">
             <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
-          </marker>
-          <marker id="arrowhead-rev" markerWidth="8" markerHeight="6" refX="0" refY="3" orient="auto">
-            <polygon points="8 0, 0 3, 8 6" fill="#94a3b8" />
           </marker>
         </defs>
 
@@ -290,7 +306,7 @@ function ArchDiagram() {
 
         {/* ── Arrow browser ↔ FastAPI ──────────────────────────────────── */}
         <line x1="162" y1="135" x2="238" y2="135" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
-        <line x1="238" y1="148" x2="162" y2="148" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#arrowhead-rev)" />
+        <line x1="162" y1="148" x2="238" y2="148" stroke="#94a3b8" strokeWidth="1.5" markerStart="url(#arrowhead)" />
         <text x="200" y="127" textAnchor="middle" fontSize="8.5" fill="#94a3b8">REST / JSON</text>
 
         {/* ── FastAPI box ──────────────────────────────────────────────── */}
@@ -307,8 +323,8 @@ function ArchDiagram() {
 
         {/* ── Arrow FastAPI ↔ SQLite ────────────────────────────────────── */}
         <line x1="442" y1="135" x2="498" y2="135" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
-        <line x1="498" y1="148" x2="442" y2="148" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#arrowhead-rev)" />
-        <text x="470" y="127" textAnchor="middle" fontSize="8.5" fill="#94a3b8">WAL</text>
+        <line x1="442" y1="148" x2="498" y2="148" stroke="#94a3b8" strokeWidth="1.5" markerStart="url(#arrowhead)" />
+        <text x="470" y="127" textAnchor="middle" fontSize="8.5" fill="#94a3b8">read / write</text>
 
         {/* ── SQLite box ───────────────────────────────────────────────── */}
         <rect x="500" y="100" width="120" height="80" rx="10" fill="#faf5ff" stroke="#e9d5ff" strokeWidth="1.5" />
@@ -317,7 +333,8 @@ function ArchDiagram() {
         <text x="560" y="164" textAnchor="middle" fontSize="9.5" fill="#9333ea">documents · estimates</text>
 
         {/* ── Arrow FastAPI ↔ ML model ─────────────────────────────────── */}
-        <line x1="340" y1="226" x2="340" y2="252" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
+        <line x1="336" y1="226" x2="336" y2="252" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#arrowhead)" />
+        <line x1="344" y1="226" x2="344" y2="252" stroke="#94a3b8" strokeWidth="1.5" markerStart="url(#arrowhead)" />
 
         {/* ── ML model box ─────────────────────────────────────────────── */}
         <rect x="220" y="254" width="240" height="22" rx="6" fill="#fff7ed" stroke="#fed7aa" strokeWidth="1.5" />
@@ -492,7 +509,7 @@ function CQRDiagram() {
         <text x="533" y="120" textAnchor="middle" fontSize="7.5" fill="#94a3b8">q̂</text>
 
         {/* Coverage badge */}
-        <rect x="404" y="182" width="112" height="20" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5" />
+        <rect x="374" y="179" width="172" height="26" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5" />
         <text x="460" y="196" textAnchor="middle" fontSize="9" fontWeight="600" fill="#166534">
           ≥ 80% coverage guaranteed
         </text>

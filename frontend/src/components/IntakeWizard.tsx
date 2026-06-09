@@ -102,7 +102,7 @@ function Step0Landing({
     {
       icon: "📄",
       title: "Upload your plan PDF",
-      body: "Drop your Summary of Benefits and Coverage — we'll pull out deductible, OOP max, and copays automatically.",
+      body: "Drop your Summary of Benefits and Coverage. We'll pull out deductible, OOP max, and copays automatically.",
     },
     {
       icon: "📊",
@@ -140,9 +140,6 @@ function Step0Landing({
         >
           Get started →
         </button>
-        <p className="mt-3 text-xs text-slate-400">
-          Nothing is stored beyond your browser session.
-        </p>
       </div>
 
       {/* How it works */}
@@ -428,7 +425,6 @@ function Step1Demographics({
         <h2 className="text-xl font-semibold text-slate-900">Tell us about yourself</h2>
         <p className="mt-1 text-sm text-slate-600">
           We use these details to predict your expected annual medical spend.
-          Nothing is stored beyond your browser session.
         </p>
       </div>
 
