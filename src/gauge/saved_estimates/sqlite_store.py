@@ -269,7 +269,7 @@ class SqliteSavedEstimateStore:
 # ------------------------------------------------------------------
 
 
-def _row_to_estimate(row: tuple) -> SavedEstimate:
+def _row_to_estimate(row: tuple[str, ...]) -> SavedEstimate:
     """Deserialise a database row into a ``SavedEstimate``.
 
     Parameters
