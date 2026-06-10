@@ -223,6 +223,7 @@ def load_meps(
     else:
         # DUID absent in this file — fall back to FAMID alone and warn.
         import warnings
+
         warnings.warn(
             "MEPS file has no 'DUID' column; counting children per FAMID alone. "
             "Child counts may be inflated. Check your MEPS file version.",
@@ -241,10 +242,7 @@ def load_meps(
     # the adult-only filter so child rows contribute to their family's count.
     # Cap at 5 to match the feature schema and clip outliers from large households.
     kids_per_family = (
-        df.loc[df[col_age].fillna(99) < 18, ["_famkey"]]
-        .assign(_n=1)
-        .groupby("_famkey")["_n"]
-        .sum()
+        df.loc[df[col_age].fillna(99) < 18, ["_famkey"]].assign(_n=1).groupby("_famkey")["_n"].sum()
     )
     df["_children"] = df["_famkey"].map(kids_per_family).fillna(0).clip(upper=5).astype(int)
 
