@@ -89,7 +89,7 @@ export default function Blog() {
             <span className="font-semibold text-slate-800">SQLite persistence.</span>{" "}
             Sessions, uploaded document chunks, and saved estimates all live in
             a single SQLite database. Nested Pydantic models are stored
-            as JSON, which keeps the schema flat and makes the stores easy to
+            as JSON, makes the stores easy to
             test.
           </p>
           {/* <p>
@@ -191,7 +191,7 @@ export default function Blog() {
             <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
               ⌈(n+1)·(1−α)⌉ / n
             </code>
-            . Call it <em>q̂</em>. The small finite-sample correction ensures
+            . Call it <em>q̂</em>. The small correction ensures
             the guarantee holds even on small sets.
           </li>
           <li>
