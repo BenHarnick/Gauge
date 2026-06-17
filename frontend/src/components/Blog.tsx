@@ -41,15 +41,16 @@ export default function Blog() {
         <p className="mb-4 leading-relaxed">
           Most cost estimators give you a single number ("you'll spend about
           $4,200 this year") with no indication of how confident they are.
-          That bothers me. Healthcare costs have a heavy right tail. A "typical"
-          year and a "bad" year look very different, and a tool that collapses
-          that into one figure is hiding something important. With such big cost differences it is important for the user to be aware of the uncertainty.
+          That bothers me. Healthcare costs are very skewed, a "typical"
+          year and a "bad" year look very different, and a tool that tries to simplify
+          that into one number is not doing the user the service they think it is. 
+          With such big cost differences it is important for the user to be aware 
+          of the uncertainty.
         </p>
         <p className="leading-relaxed">
-          Gauge predicts a range, not a point, and the range has a formal
-          statistical guarantee: it covers the true value 80% of the time for
-          anyone with your demographics. That guarantee comes from conformal
-          prediction, which I'll explain below.
+          Gauge uses conformal prediction to predict a range of costs that the user can expect, the true cost will be accurate for 
+          80% of its users. Gauge uses the user's demographics in order to 
+           calculate the numbers for each user.
         </p>
       </section>
 
@@ -120,7 +121,8 @@ export default function Blog() {
           </a>
           , a nationally representative survey of American families that
           records actual out-of-pocket and total medical spending. It's the
-          best public data source that I could find which would ensure that my data and therefore the effects of the project would have real standing.
+          best public data source that I could find which would ensure that 
+          my data and therefore this project is accurate for real-world use.
         </p>
         <p className="mb-6 leading-relaxed">
           The MEPS data didn't come clean. Variable names change between
@@ -159,9 +161,9 @@ export default function Blog() {
         </p>
         <p className="mb-4 leading-relaxed">
           The other two models I used predict the 10th and 90th percentile. This would
-          theoretically give the user a good range at 80% confidence what they could expect to pay.
+          theoretically give the user a good range at 80% confidence of what they could expect to pay.
           The problem with this is that that range may not cover 80% of the data. Conformal Quantile Regression (CQR)
-          will calculate on average how much does the interval need to be expanded to cover the full 80%. 
+          will calculate on average how much the interval needs to be expanded to cover the full 80%. 
         </p>
         <p className="mb-6 leading-relaxed">
           Here's the procedure for the CQR:
@@ -171,8 +173,7 @@ export default function Blog() {
 
         <ol className="mt-6 space-y-3 pl-5 text-sm leading-relaxed text-slate-600 list-decimal">
           <li>
-            20% of the data is held out before training. The model never sees
-            these rows during fitting.
+            20% of the data is held out before training.
           </li>
           <li>
             On the set that was left out, I compute a <em>nonconformity score</em> for
@@ -182,7 +183,8 @@ export default function Blog() {
             </code>
             . If the true value was already inside the raw interval, the score
             is negative (this is ideal). If it fell outside, the score is positive and records
-            by how much.
+            by how much. By looking at all of the nonconformity scores I can see how well the model fits 
+            on the 20% that was originally left out, and from there I can tell whether the range needs to be widened or in the rare case shrunk.
           </li>
           <li>
             Take the empirical quantile of those scores at level{" "}
@@ -217,9 +219,36 @@ export default function Blog() {
         <p className="mb-4 leading-relaxed">
           Once I have a conformal interval on total charges, I need to convert
           it into an out-of-pocket interval under the user's actual plan. 
-          Because higher total charges always produce equal or higher 
-          out-of-pocket costs, I can run each bound of the charge interval 
-          through the plan logic independently and the output is still a valid interval.
+          The user's actual cost can be found by running each bound of charges 
+          through the plan submitted.
+        </p>
+        <p className="mb-4 leading-relaxed">
+          
+          As an example imagine a plan with a $1,500 deductible, coinsurance of 20%, and 
+          out-of-pocket maximum of $6,000. If the charges range from $5,000 to $20,000 then
+          we can plug this into the plan and get a range of $2,200 to $5,200. This range is much 
+          smaller and much more useful for the user.
+        </p>
+      </section>
+
+      <section className="mb-16">
+        <h2 className="mb-4 text-2xl font-semibold text-slate-900">
+          Possible Improvements
+        </h2>
+        <p className="mb-4 leading-relaxed">
+          There is still room for improvement here as there are several limitations that need to be addressed.
+          The MEPS data, while significant, was not very large, so there is definite room for improvement when
+          it comes to training the model. The model does not even touch upon already diagnosed illnesses. 
+          Chronic illnesses can have a massive effect on healthcare costs. The solution to this would be to 
+          find another dataset to combine with the MEPS data; it would need to still be from a respected 
+          source in order to keep the validity of the model.
+        </p>
+
+        <p className="mb-4 leading-relaxed">
+          The limitation that I found with the CQR is that it guarantees that 80% of the users will find their cost in the provided range, but 
+          it is not a promise for everyone. This led to some issues with specific demographics; the model is not as effective
+           for smokers because their costs are split into two clusters which makes them very difficult to put in a range. 
+           The fix to this problem is sub-group CQR, but considering the already small sample set further division could make it unstable.
         </p>
       </section>
       <section className="mb-16">
@@ -243,21 +272,14 @@ export default function Blog() {
           with real meaning. Integrating the MEPS data, while worthwhile, was time consuming and frustrating
           as all of the files were different and needed to be adjusted in order for the merge to work.
           A real breakthrough was adopting CQR. I hadn't used it before, so I did some research and landed 
-          on it as the right tool. It transformed a single overconfident number into a range with a formal 
-          statistical guarantee, which felt much more honest given how unpredictable healthcare costs actually are.
-        </p>
-
-        <p className="mb-4 leading-relaxed">
-          There is still room for improvement here as there are several limitations that need to be addressed.
-          The MEPS data, while significant, was not very large, so there is definite room for improvement when
-          it comes to training the model. The model does not even touch upon already diagnosed illnesses. 
-          Chronic illnesses can have a massive effect on healthcare costs.
+          on it as the right tool. It transformed a single not fully accurate number into a range with  
+          statistical backing, which felt much more honest given how unpredictable healthcare costs actually are.
         </p>
 
         <p className="mb-4 leading-relaxed">
           This is the first project that I have completed that has both machine learning and UI aspects.
-           Building both at once took real adjustment; I've built models and I've built websites, but integrating them into a coherent product is a different challenge
-           If I were to do it again would speak to more people at the beginning of the project to figure out what they would want out of this project.
+           Building both at once took real adjustment. I've built models and I've built websites, but integrating them into a single product was a different challenge.
+           If I were to do it again I would speak to more people at the beginning of the project to figure out what they would want out of this project.
            Originally I was only working to create a tool to help me, it wasn't until later that I thought to expand it to be the full end to end service that it is now.
            This change led to me needing to re-develop the product multiple times until I got to this final version.
            </p>
