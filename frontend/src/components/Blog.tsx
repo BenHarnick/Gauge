@@ -229,11 +229,33 @@ export default function Blog() {
           through the plan submitted.
         </p>
         <p className="mb-4 leading-relaxed">
-          
-          As an example imagine a plan with a $1,500 deductible, coinsurance of 20%, and 
-          out-of-pocket maximum of $6,000. If the charges range from $5,000 to $20,000 then
-          we can plug this into the plan and get a range of $2,200 to $5,200. This range is much 
-          smaller and much more useful for the user.
+          As an example, imagine charges ranging from $5,000 to $20,000. Plug both ends
+          through a plan's deductible, coinsurance, and OOP max and you get a much
+          tighter range back out, something like $2,200 to $5,200. That tighter range is
+          what's actually useful to the user.
+        </p>
+
+        <h3 className="mb-3 mt-10 text-lg font-semibold text-slate-900">
+          The signature result
+        </h3>
+
+        <p className="mb-4 leading-relaxed">
+          The example above is essentially the same process that I ran on the full dataset.
+         In a given year charges can be all over the place, most people are in the thousands but some go
+          past $100,000, so the 80% interval is $0 to $18,044. After the plan is applied
+          that interval shrinks to $0–$4,809, but you get a lot of people around
+          $6,000. Those are the people who had the worst charges, the OOP max just caps
+          what they actually owe.
+        </p>
+
+        <SignatureResultDiagram />
+
+        <p className="mt-6 leading-relaxed">
+          Predicting raw medical charges is very difficult because of the wide differences year by year, 
+          but predicting what
+          someone will actually pay is a much easier problem since the plan caps it
+          regardless of how bad the charges get. I don't have to improve the model to 
+          fix this, the plan structure does that for free.
         </p>
       </section>
 
@@ -557,6 +579,130 @@ function CQRDiagram() {
         <rect x="374" y="179" width="172" height="26" rx="6" fill="#f0fdf4" stroke="#86efac" strokeWidth="1.5" />
         <text x="460" y="196" textAnchor="middle" fontSize="9" fontWeight="600" fill="#166534">
           ≥ 80% coverage guaranteed
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+/** Signature result: wide right-skewed charge distribution → narrow OOP distribution capped at the ceiling */
+function SignatureResultDiagram() {
+  // Left panel: right-skewed charges on a log-ish axis — tall in the middle, long thin tail to the right.
+  const chargeBars = [10, 18, 28, 42, 60, 78, 72, 58, 44, 32, 22, 15, 10, 6, 4, 3];
+  // Right panel: fairly flat/declining distribution, with a sharp spike at the OOP max ceiling.
+  const oopBars = [55, 38, 30, 24, 19, 15, 12, 10, 8, 6, 5, 4, 3, 2, 2, 78];
+
+  const leftX = 30;
+  const rightX = 380;
+  const panelW = 260;
+  const baseY = 175;
+  const top = 35;
+  const barGap = 1.5;
+  const barW = panelW / chargeBars.length - barGap;
+
+  return (
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-6">
+      <svg
+        viewBox="0 0 680 235"
+        xmlns="http://www.w3.org/2000/svg"
+        className="mx-auto w-full max-w-2xl"
+        aria-label="Signature result: charge distribution compressed into a capped out-of-pocket distribution"
+      >
+        <defs>
+          <marker id="sig-arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto-start-reverse">
+            <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+          </marker>
+        </defs>
+
+        {/* ── Left panel: gross charges ────────────────────────────────── */}
+        <text x={leftX + panelW / 2} y="18" textAnchor="middle" fontSize="10" fontWeight="600" fill="#334155">
+          Annual gross charges (log scale)
+        </text>
+        <line x1={leftX} y1={baseY} x2={leftX + panelW} y2={baseY} stroke="#cbd5e1" strokeWidth="1" />
+        {chargeBars.map((h, i) => (
+          <rect
+            key={i}
+            x={leftX + i * (barW + barGap)}
+            y={baseY - (h / 78) * (baseY - top)}
+            width={barW}
+            height={(h / 78) * (baseY - top)}
+            fill="#93c5fd"
+            stroke="#60a5fa"
+            strokeWidth="0.5"
+          />
+        ))}
+        {/* 80% CI shading + deductible/OOP-max markers */}
+        <rect x={leftX} y={top} width={panelW * 0.62} height={baseY - top} fill="#3b82f6" opacity="0.06" />
+        <line
+          x1={leftX + panelW * 0.18}
+          y1={top}
+          x2={leftX + panelW * 0.18}
+          y2={baseY}
+          stroke="#ea580c"
+          strokeWidth="1.5"
+          strokeDasharray="4 3"
+        />
+        <text x={leftX + panelW * 0.18 + 4} y={top + 10} fontSize="8" fill="#c2410c">deductible $1,500</text>
+        <line
+          x1={leftX + panelW * 0.66}
+          y1={top}
+          x2={leftX + panelW * 0.66}
+          y2={baseY}
+          stroke="#15803d"
+          strokeWidth="1.5"
+          strokeDasharray="2 2"
+        />
+        <text x={leftX + panelW * 0.66 + 4} y={top + 22} fontSize="8" fill="#15803d">OOP max reached &gt;$24k</text>
+        <text x={leftX + panelW / 2} y={baseY + 14} textAnchor="middle" fontSize="8.5" fill="#1d4ed8" fontWeight="600">
+          80% CI: $0 – $18,044
+        </text>
+        <text x={leftX + panelW / 2} y={baseY + 26} textAnchor="middle" fontSize="8" fill="#64748b">
+          n = 3,165 · MEPS HC-233
+        </text>
+
+        {/* ── Arrow between panels ─────────────────────────────────────── */}
+        <line x1={leftX + panelW + 8} y1="105" x2={rightX - 8} y2="105" stroke="#94a3b8" strokeWidth="1.5" markerEnd="url(#sig-arrow)" />
+        <text x={(leftX + panelW + rightX) / 2} y="97" textAnchor="middle" fontSize="8.5" fill="#94a3b8">apply plan</text>
+
+        {/* ── Right panel: out-of-pocket cost ─────────────────────────── */}
+        <text x={rightX + panelW / 2} y="18" textAnchor="middle" fontSize="10" fontWeight="600" fill="#334155">
+          Out-of-pocket cost after plan
+        </text>
+        <line x1={rightX} y1={baseY} x2={rightX + panelW} y2={baseY} stroke="#cbd5e1" strokeWidth="1" />
+        {oopBars.map((h, i) => {
+          const isCeiling = i === oopBars.length - 1;
+          return (
+            <rect
+              key={i}
+              x={rightX + i * (barW + barGap)}
+              y={baseY - (h / 78) * (baseY - top)}
+              width={barW}
+              height={(h / 78) * (baseY - top)}
+              fill={isCeiling ? "#16a34a" : "#86efac"}
+              stroke={isCeiling ? "#15803d" : "#4ade80"}
+              strokeWidth="0.5"
+            />
+          );
+        })}
+        <rect x={rightX} y={top} width={panelW * 0.85} height={baseY - top} fill="#16a34a" opacity="0.06" />
+        <line
+          x1={rightX + panelW * 0.16}
+          y1={top}
+          x2={rightX + panelW * 0.16}
+          y2={baseY}
+          stroke="#ea580c"
+          strokeWidth="1.5"
+          strokeDasharray="4 3"
+        />
+        <text x={rightX + panelW * 0.16 + 4} y={top + 10} fontSize="8" fill="#c2410c">deductible $1,500</text>
+        <text x={rightX + panelW - 6} y={top + 36} textAnchor="end" fontSize="8" fontWeight="600" fill="#15803d">
+          ← OOP max $6,000 (ceiling)
+        </text>
+        <text x={rightX + panelW / 2} y={baseY + 14} textAnchor="middle" fontSize="8.5" fill="#15803d" fontWeight="600">
+          80% CI: $0 – $4,809
+        </text>
+        <text x={rightX + panelW / 2} y={baseY + 26} textAnchor="middle" fontSize="8" fill="#64748b">
+          spike = everyone capped at the ceiling
         </text>
       </svg>
     </div>

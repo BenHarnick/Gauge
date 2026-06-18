@@ -100,13 +100,6 @@ export default function App() {
       <main className={showBlog ? "" : "mx-auto max-w-5xl px-6 py-8"}>
         {showBlog ? <Blog /> : <IntakeWizard />}
       </main>
-
-      <footer className="mx-auto max-w-5xl px-6 pb-8">
-        <p className="text-xs text-slate-400">
-          Illustrative prototype — not a substitute for an actual insurance
-          quote or advice from your insurer.
-        </p>
-      </footer>
     </div>
   );
 }
