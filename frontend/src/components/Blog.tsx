@@ -176,15 +176,21 @@ export default function Blog() {
             20% of the data is held out before training.
           </li>
           <li>
-            On the set that was left out, I compute a <em>nonconformity score</em> for
+            Basically we first use the nonconformity scores to check whether our predicted 
+            range contains the true value 80% of the time, and if it doesn’t we use them to
+             determine how much the range needs to be widened. 
+            On the calibration set (the data we held out), I compute a <em>nonconformity score</em> for
             each row:{" "}
             <code className="rounded bg-slate-100 px-1 py-0.5 text-xs">
               score = max(q_lo(x) − y, y − q_hi(x))
             </code>
-            . If the true value was already inside the raw interval, the score
-            is negative (this is ideal). If it fell outside, the score is positive and records
-            by how much. By looking at all of the nonconformity scores I can see how well the model fits 
-            on the 20% that was originally left out, and from there I can tell whether the range needs to be widened or in the rare case shrunk.
+             where q_lo and q_hi are the 10th and 90th percentiles for someone with those demographics. 
+             If the true value falls inside the interval predicted by the model, the score is negative 
+             (this is ideal). If the true value falls outside the interval, the score becomes positive
+              and measures how far outside it landed. If the model's intervals are calibrated correctly, 
+              then about 80% of these scores should be negative. If fewer than 80% are negative, the 
+              intervals are too narrow. The next step calculates how much to widen the interval by 
+              in order to reach the 80% coverage.
           </li>
           <li>
             Take the empirical quantile of those scores at level{" "}
