@@ -94,14 +94,8 @@ _RC: dict[str, Any] = {
 
 
 def _rc_context() -> AbstractContextManager[None]:
-    """Typed wrapper around ``plt.rc_context(_RC)``.
-
-    matplotlib's stub types ``rc_context``'s ``rc`` argument against a
-    ``Literal`` union of every valid rcParams key, which a plain
-    ``dict[str, Any]`` can never satisfy under mypy's invariant dict typing.
-    Centralizing the suppression here keeps it out of every call site.
-    """
-    return plt.rc_context(_RC)  # type: ignore[arg-type]
+    """Typed wrapper around ``plt.rc_context(_RC)``, shared by every figure."""
+    return plt.rc_context(_RC)
 
 
 # ---------------------------------------------------------------------------
