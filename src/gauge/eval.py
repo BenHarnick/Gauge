@@ -19,6 +19,7 @@ from __future__ import annotations
 import json
 import math
 import sys
+from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -90,6 +91,17 @@ _RC: dict[str, Any] = {
     "axes.labelsize": 11,
     "legend.fontsize": 10,
 }
+
+
+def _rc_context() -> AbstractContextManager[None]:
+    """Typed wrapper around ``plt.rc_context(_RC)``.
+
+    matplotlib's stub types ``rc_context``'s ``rc`` argument against a
+    ``Literal`` union of every valid rcParams key, which a plain
+    ``dict[str, Any]`` can never satisfy under mypy's invariant dict typing.
+    Centralizing the suppression here keeps it out of every call site.
+    """
+    return plt.rc_context(_RC)  # type: ignore[arg-type]
 
 
 # ---------------------------------------------------------------------------
@@ -728,7 +740,7 @@ def plot_charge_distribution(df: pd.DataFrame, source_label: str) -> None:
     Takeaway: healthcare costs are heavily right-skewed — almost nobody pays
     the mean, so predicting the mean alone is misleading.
     """
-    with plt.rc_context(_RC):
+    with _rc_context():
         fig, ax = plt.subplots(figsize=(7, 4))
         charges = df[TARGET].to_numpy()
         # Log-spaced bins
@@ -775,7 +787,7 @@ def plot_coverage_calibration(agg: dict[str, Any]) -> None:
     raw_mean = agg["raw_coverage"]["mean"]
     raw_std = agg["raw_coverage"]["std"]
 
-    with plt.rc_context(_RC):
+    with _rc_context():
         fig, ax = plt.subplots(figsize=(6, 5))
 
         # Ideal diagonal
@@ -849,7 +861,7 @@ def plot_conditional_coverage(agg: dict[str, Any]) -> None:
 
     colors = [C_RAW if m < 0.80 else C_CQR for m in means]
 
-    with plt.rc_context(_RC):
+    with _rc_context():
         fig, ax = plt.subplots(figsize=(7, 6))
         y_pos = np.arange(len(labels))
         ax.barh(
@@ -891,7 +903,7 @@ def plot_predicted_vs_actual(seed_result: SeedResult) -> None:
     in_interval = (y >= lo) & (y <= hi)
     coverage = float(in_interval.mean())
 
-    with plt.rc_context(_RC):
+    with _rc_context():
         fig, ax = plt.subplots(figsize=(6, 6))
 
         # Points outside interval
@@ -955,7 +967,7 @@ def plot_benchmark(agg: dict[str, Any]) -> None:
 
     colors = [C_CQR if "CQR" in n else C_NEUTRAL for n in model_names]
 
-    with plt.rc_context(_RC):
+    with _rc_context():
         fig, axes = plt.subplots(1, 2, figsize=(12, 4))
 
         for ax, vals, stds, xlabel, title in [
@@ -1159,7 +1171,7 @@ def plot_oop_transform(seed_result: SeedResult, source_label: str) -> None:
     charge_width = hi_rep - lo_rep
     oop_width = oop_hi_rep - oop_lo_rep
 
-    with plt.rc_context(_RC):
+    with _rc_context():
         fig, (ax_c, ax_o) = plt.subplots(1, 2, figsize=(13, 5))
 
         # ── Left: charges (log x-scale) ──────────────────────────────────────
