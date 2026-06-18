@@ -22,7 +22,7 @@ import sys
 from contextlib import AbstractContextManager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import matplotlib
 
@@ -94,8 +94,16 @@ _RC: dict[str, Any] = {
 
 
 def _rc_context() -> AbstractContextManager[None]:
-    """Typed wrapper around ``plt.rc_context(_RC)``, shared by every figure."""
-    return plt.rc_context(_RC)
+    """Typed wrapper around ``plt.rc_context(_RC)``, shared by every figure.
+
+    matplotlib's stub types ``rc_context``'s ``rc`` parameter as a dict keyed
+    by a closed ``Literal`` union of every valid rcParams name. A plain
+    ``dict[str, Any]`` is never assignable to that under mypy's invariant
+    dict typing, so the argument is widened to ``Any`` here rather than via
+    a per-line ``# type: ignore`` (whose "unused" status is sensitive to
+    mypy's incremental cache).
+    """
+    return plt.rc_context(cast(Any, _RC))
 
 
 # ---------------------------------------------------------------------------
