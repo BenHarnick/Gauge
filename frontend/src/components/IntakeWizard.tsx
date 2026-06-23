@@ -130,8 +130,7 @@ function Step0Landing({
         </h1>
         <p className="mx-auto mt-5 max-w-xl text-lg text-slate-600">
           Gauge reads your real insurance plan, predicts your annual costs with
-          calibrated uncertainty, and answers your questions — in under two
-          minutes.
+          calibrated uncertainty, and answers your questions.
         </p>
         <button
           type="button"

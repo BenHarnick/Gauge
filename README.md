@@ -2,7 +2,7 @@
 
 > **What will my health insurance actually cost me this year?**
 
-That one question is surprisingly hard to answer. Your premium is visible. Everything else — deductibles, coinsurance, copays, OOP max, and how all of those interact with your health profile — is not. Gauge makes it answerable: you enter your demographics and your plan, and Gauge returns a calibrated out-of-pocket interval with an honest 80% coverage guarantee, not a single guess dressed up as precision.
+That one question is surprisingly hard to answer. Your premium is visible. Everything else, deductibles, coinsurance, copays, OOP max, and how all of those interact with your health profile, is not. Gauge makes it answerable: you enter your demographics and your plan, and Gauge returns a calibrated out-of-pocket interval with an honest 80% coverage guarantee, not a single guess dressed up as precision.
 
 <video src="https://github.com/BenH88888/Gauge/assets/180685510/606091395-0fcaec30-f088-4587-8c81-3f44bf3d8fcc" controls width="100%" title="Gauge demo"></video>
 
@@ -26,7 +26,7 @@ Demographics → ML prediction → Plan upload → Apply plan → OOP interval
 
 **Plan upload.** Upload your Summary of Benefits PDF. The backend extracts deductible, OOP max, coinsurance rate, and copays automatically using targeted Q&A against the document's TF-IDF retrieval index. You review and correct any field before confirming.
 
-**OOP interval.** `apply_plan_to_annual_spend` is monotone non-decreasing in charges, so applying it to the CQR charge interval `[lo, median, hi]` yields a valid OOP interval `[OOP(lo), OOP(median), OOP(hi)]` — no simulation required. The same 80% coverage guarantee transfers.
+**OOP interval.** `apply_plan_to_annual_spend` is monotone non-decreasing in charges, so applying it to the CQR charge interval `[lo, median, hi]` yields a valid OOP interval `[OOP(lo), OOP(median), OOP(hi)]`, no simulation required. The same 80% coverage guarantee transfers.
 
 ## Disclaimer
 
@@ -36,7 +36,7 @@ Estimates are illustrative. Real costs depend on actual plan documents, claim ad
 
 You need two terminals.
 
-**Terminal 1 — backend:**
+**Terminal 1 (backend):**
 
 ```bash
 pip install -e ".[dev]"
@@ -45,7 +45,7 @@ uvicorn gauge.main:app --reload
 
 On first startup the predictor trains and caches the model under `~/.cache/gauge/`. Subsequent starts load from cache.
 
-**Terminal 2 — frontend:**
+**Terminal 2 (frontend):**
 
 ```bash
 cd frontend
@@ -53,7 +53,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173`. Enter your demographics, upload your plan PDF, review the extracted fields, and get your personalised OOP interval. The what-if simulator and plan Q&A panel appear inline below the result — no separate tabs. The **"How it works"** nav link opens a blog page explaining the project, architecture, and conformal prediction approach.
+Open `http://localhost:5173`. Enter your demographics, upload your plan PDF, review the extracted fields, and get your personalised OOP interval. The what-if simulator and plan Q&A panel appear inline below the result, no separate tabs. The **"How it works"** nav link opens a blog page explaining the project, architecture, and conformal prediction approach.
 
 The frontend talks to the backend at `http://localhost:8000`. Override with `VITE_API_BASE` at build time.
 
@@ -84,8 +84,8 @@ curl -X POST http://localhost:8000/sessions/$SESSION/chat \
 
 The predictor auto-detects a data source in this order:
 
-1. `GAUGE_DATASET_CSV` — path to a Kaggle-style insurance CSV.
-2. `GAUGE_MEPS_DTA` — path to a MEPS `.dta` file (optionally paired with `GAUGE_MEPS_SAQ` for BMI from HC-236).
+1. `GAUGE_DATASET_CSV`: path to a Kaggle-style insurance CSV.
+2. `GAUGE_MEPS_DTA`: path to a MEPS `.dta` file (optionally paired with `GAUGE_MEPS_SAQ` for BMI from HC-236).
 3. `data/meps_hc233.dta` if present (run `python scripts/fetch_meps.py` to download; BMI merged from `data/meps_hc236.dta` when present).
 4. `data/insurance.csv` (Kaggle insurance dataset).
 5. Synthetic Kaggle-shaped data, deterministically generated.
@@ -122,7 +122,7 @@ Sessions and uploaded documents persist to SQLite at `~/.cache/gauge/gauge.db` b
 
 ## Saved estimates
 
-Completed estimates can be saved under a user-supplied label and retrieved across sessions. The browser generates a UUID on first visit, sent as `X-Gauge-User-Id` on every request — no login required, but estimates are scoped to your browser.
+Completed estimates can be saved under a user-supplied label and retrieved across sessions. The browser generates a UUID on first visit, sent as `X-Gauge-User-Id` on every request, no login required, but estimates are scoped to your browser.
 
 | Method | Path | Description |
 |--------|------|-------------|
